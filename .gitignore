@@ -2,3 +2,6 @@
 *.env
 secrets/
 .DS_Store
+
+docs/
+_recovery/
