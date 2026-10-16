@@ -5,3 +5,5 @@ secrets/
 
 docs/
 _recovery/
+.opencode/
+assets/generated/
