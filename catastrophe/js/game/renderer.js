@@ -10,6 +10,9 @@ import { quip } from '../data/quips.js';
 import { Fx, drawText } from './fx.js';
 
 const CAT_PX = 76;
+/** Per-frame rig-sprite repaint budget (ms of JS time), tuned at runtime between these bounds. */
+const PAINT_BUDGET_MIN = 0.4;
+const PAINT_BUDGET_MAX = 6;
 const ENEMY_PX = 60;
 const BOSS_PX = 180;
 const KITTEN_NAMES = { beans: 'Beans', biscuit: 'Biscuit', noodle: 'Noodle', tofu: 'Tofu' };
@@ -102,6 +105,13 @@ export class Renderer {
     this.pool = [];
     this.cacheMs = 0;
     this.cacheN = 0;
+    /** Rig repaint time spent this frame, and the adaptive per-frame budget for it (see adaptPaintBudget). */
+    this.paintMs = 0;
+    this.paintBudget = 3;
+    this.lastDrawAt = 0;
+    this.frameSum = 0;
+    this.frameN = 0;
+    this.baseDt = 1000 / 60;
     /** Wardrobe: catId|heroId → hatId. @type {Record<string, string>} */
     this.hats = {};
     /** @type {{rig: CatRig, scale:number, pokeT:number, sprite?: any, id:string, name:string}|null} */
@@ -742,14 +752,36 @@ export class Renderer {
 
   draw() {
     const t0 = performance.now();
+    this.adaptPaintBudget(t0);
     this.drawFrame();
     this.drawMs += (performance.now() - t0 - this.drawMs) * 0.05;
+  }
+
+  /**
+   * Sprite repaints are mostly rasterized off the main thread, so JS timing undercounts them. Tune the
+   * per-frame repaint budget from real frame intervals: shrink it when frames run slow, grow it with headroom.
+   * @param {number} now
+   */
+  adaptPaintBudget(now) {
+    const dt = now - this.lastDrawAt;
+    this.lastDrawAt = now;
+    if (dt <= 0 || dt > 250) return;
+    this.frameSum += dt;
+    if (++this.frameN < 30) return;
+    const avg = this.frameSum / this.frameN;
+    this.frameSum = 0;
+    this.frameN = 0;
+    // The display's own frame interval: the best average seen, relaxing slowly in case it was a fluke.
+    this.baseDt = avg < this.baseDt ? avg : this.baseDt + (avg - this.baseDt) * 0.01;
+    if (avg > this.baseDt * 1.1) this.paintBudget = Math.max(PAINT_BUDGET_MIN, this.paintBudget * 0.7);
+    else if (avg < this.baseDt * 1.04) this.paintBudget = Math.min(PAINT_BUDGET_MAX, this.paintBudget * 1.15);
   }
 
   drawFrame() {
     const sim = this.sim;
     const ctx = this.ctx;
     if (!sim || !this.room || !this.layout) return;
+    this.paintMs = 0;
     if (this.hadError) {
       // A sprite that threw mid-draw may have left unbalanced save()s behind.
       /** @type {any} */ (ctx).reset?.();
@@ -1286,7 +1318,10 @@ export class Renderer {
       sp = holder.sprite = { canvas: c, cx: /** @type {CanvasRenderingContext2D} */ (c.getContext('2d')), pw, ph, wall: -1, rigT: -1, key: '' };
     }
     const wall = performance.now();
-    if (sp.wall < 0 || sp.key !== key || (wall - sp.wall >= 1000 / hz && sp.rigT !== rigTime)) {
+    const must = sp.wall < 0 || sp.key !== key;
+    // Crowded screens: once this frame's repaint budget is spent, due sprites keep their last frame
+    // (recently repainted ones aren't due next frame, so the rest catch up round-robin).
+    if (must || (wall - sp.wall >= 1000 / hz && sp.rigT !== rigTime && this.paintMs < this.paintBudget)) {
       sp.wall = wall;
       sp.rigT = rigTime;
       sp.key = key;
@@ -1300,6 +1335,8 @@ export class Renderer {
       } catch (err) {
         /** @type {any} */ (cx).reset?.();
         throw err;
+      } finally {
+        this.paintMs += performance.now() - wall;
       }
     }
     ctx.drawImage(sp.canvas, x - ax, y - ay, w, h);
