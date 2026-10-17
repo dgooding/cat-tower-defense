@@ -387,6 +387,9 @@ body:not([data-screen='level']) #game {
   background: #ffd6d0;
   animation: pulse 0.8s infinite;
 }
+.sticker.cats.full {
+  background: #fde9a9;
+}
 @keyframes pulse {
   50% {
     transform: scale(1.08);

@@ -9,22 +9,46 @@ const ORDER = ['pudding', 'granny-purl', 'pudding', 'sriracha', 'whiskerton', 'm
 const BRANCH = { pudding: 3, 'granny-purl': 3, 'mama-mittens': 4, sriracha: 4, whiskerton: 4, 'maneki-mochi': 4, chonkington: 3, 'dr-nip': 3 };
 
 export class AutoBot {
-  /** @param {import('./sim.js').Sim} sim @param {{powers?: boolean, build?: boolean, callEarly?: boolean, hero?: boolean}} [o] */
+  /** @param {import('./sim.js').Sim} sim @param {{powers?: boolean, build?: boolean, callEarly?: boolean, hero?: boolean, free?: boolean}} [o] free: pick its own best-coverage spots anywhere (like a sharp human) instead of the layout's suggestions */
   constructor(sim, o = {}) {
     this.sim = sim;
-    this.o = { powers: true, build: true, callEarly: true, hero: true, ...o };
+    this.o = { powers: true, build: true, callEarly: true, hero: true, free: false, ...o };
     this.t = 0;
     this.built = 0;
     this.heroPosted = false;
     // Path hidden by a gimmick (the kotatsu quilt) doesn't count as coverage.
     const g = sim.gimmick;
     const skip = g?.kind === 'kotatsu' ? (/** @type {number} */ x, /** @type {number} */ y) => ((x - g.x) / g.rx) ** 2 + ((y - g.y) / g.ry) ** 2 < 1 : undefined;
+    this.skip = skip;
+    /** Free mode: slot → chosen spot. @type {Map<number, {x:number, y:number}>} */
+    this.freeSpots = new Map();
     // Rank spots by how much path a typical cat would cover from them.
     this.spotRank = sim.layout.spots
       .map((p, i) => ({ i, cov: coverage(sim.tracks, p, 270, skip) }))
       .filter((s) => s.cov > 0)
       .sort((a, b) => b.cov - a.cov)
       .map((s) => s.i);
+    if (this.o.free) {
+      /** @type {{x:number, y:number, cov:number}[]} */
+      const grid = [];
+      for (let x = 100; x <= 1820; x += 40) for (let y = 170; y <= 1010; y += 40) if (!sim.canPlace(x, y)) grid.push({ x, y, cov: coverage(sim.tracks, { x, y }, 270, skip) });
+      this.freeGrid = grid.filter((p) => p.cov > 0).sort((a, b) => b.cov - a.cov);
+    }
+  }
+
+  /** Free mode: seat a cat at the best still-free grid spot. @param {string} cat */
+  buildFree(cat) {
+    const sim = this.sim;
+    for (const p of this.freeGrid ?? []) {
+      if (sim.canPlace(p.x, p.y)) continue;
+      const slot = sim.place(cat, p.x, p.y);
+      if (slot >= 0) {
+        this.freeSpots.set(slot, p);
+        return true;
+      }
+      return false;
+    }
+    return false;
   }
 
   /** Call once per sim step. */
@@ -47,14 +71,17 @@ export class AutoBot {
   think() {
     const sim = this.sim;
     for (let guard = 0; guard < 4; guard++) {
-      const free = this.spotRank.filter((i) => !sim.towers[i] && sim.spotUsable(i));
+      const free = this.o.free
+        ? (this.freeGrid ?? []).some((p) => !sim.canPlace(p.x, p.y)) ? [-1] : []
+        : this.spotRank.filter((i) => !sim.towers[i] && sim.spotUsable(i));
       const cats = sim.level.cats;
       const want = ORDER.filter((c) => cats.includes(/** @type {any} */ (c)));
       const nextCat = want[this.built % want.length];
       const buildCost = nextCat ? CAT_BY_ID[nextCat].tiers[0].cost : Infinity;
       // Cheapest upgrade on the best-covering towers.
       let up = null;
-      for (const i of this.spotRank) {
+      const slots = this.o.free ? sim.towers.map((_, i) => i) : this.spotRank;
+      for (const i of slots) {
         const t = sim.towers[i];
         if (!t) continue;
         const opts = nextTiers(t.tier);
@@ -65,7 +92,7 @@ export class AutoBot {
       }
       const preferBuild = free.length > 0 && (!up || this.built < 3 || buildCost <= up.cost * 1.3);
       if (preferBuild && sim.treats >= buildCost) {
-        if (sim.build(free[0], /** @type {string} */ (nextCat))) {
+        if (this.o.free ? this.buildFree(/** @type {string} */ (nextCat)) : sim.build(free[0], /** @type {string} */ (nextCat))) {
           this.built++;
           continue;
         }

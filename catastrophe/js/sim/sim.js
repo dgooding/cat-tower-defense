@@ -26,7 +26,7 @@ export const PLACE_WHY = {
   stash: 'Too close to the Snack Stash',
   cat: 'Too close to another cat',
   sock: 'A sock is lying there',
-  limit: 'Nap Time: only 4 cats allowed',
+  limit: 'Cat limit reached: sell one to seat another',
   wave: 'Cats can only move between waves',
   over: 'The level is over',
 };
@@ -173,6 +173,8 @@ export class Sim {
     this.boundary = true;
     // Challenges (Interactive Mode): Iron Cat = 1 snack, no powers; Nap Time = at most 4 cats.
     if (this.challenge === 'iron') this.lives = this.maxLives = 1;
+    /** How many cats may be seated at once: the level's suggested-spot count (Nap Time: 4; Endless: 16). */
+    this.catCap = this.challenge === 'nap' ? PLACE.napMax : this.endless ? 16 : Math.max(4, o.layout.spots.length);
     // Gimmicks / moods. 2-3's sock lands on one of the layout's landing points (layout.spots).
     this.activePath = 0;
     this.sockSpot = -1;
@@ -246,7 +248,7 @@ export class Sim {
       if (((t.x - x) / (2 * PLACE.rx)) ** 2 + ((t.y - y) / (2 * PLACE.ry)) ** 2 < 1) return 'cat';
     }
     if (this.underSock({ x, y })) return 'sock';
-    if (this.challenge === 'nap' && n >= PLACE.napMax && !(ignore >= 0 && this.towers[ignore])) return 'limit';
+    if (n >= this.catCap && !(ignore >= 0 && this.towers[ignore])) return 'limit';
     return '';
   }
 

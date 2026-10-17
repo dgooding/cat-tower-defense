@@ -1,6 +1,7 @@
 // Headless balance bot: plays every level with a greedy builder (and once with zero cats).
-// Usage: node tools/bot.mjs [levelId…] [--hero=<heroId>|--hero=all] [--challenge=iron|nap]
+// Usage: node tools/bot.mjs [levelId…] [--hero=<heroId>|--hero=all] [--challenge=iron|nap] [--free]
 //   e.g. node tools/bot.mjs 1-1 1-2      node tools/bot.mjs --hero=nebula      node tools/bot.mjs --hero=all
+//   --free: the bot picks its own best-coverage spots anywhere (free placement, like a sharp human)
 import { LEVELS, LEVEL_BY_ID } from '../js/data/levels.js';
 import { HEROES } from '../js/data/heroes.js';
 import { getLayout } from '../js/data/layout.js';
@@ -9,11 +10,11 @@ import { AutoBot } from '../js/sim/autobot.js';
 
 /**
  * @param {import('../js/data/levels.js').LevelDef} level
- * @param {{build?: boolean, powers?: boolean, hero?: string|null, challenge?: 'iron'|'nap'|null}} o
+ * @param {{build?: boolean, powers?: boolean, hero?: string|null, challenge?: 'iron'|'nap'|null, free?: boolean}} o
  */
 export function runLevel(level, o = {}) {
   const sim = new Sim({ level, layout: getLayout(level), events: false, hero: o.hero ?? null, challenge: o.challenge ?? null });
-  const bot = new AutoBot(sim, { build: o.build !== false, powers: o.powers !== false });
+  const bot = new AutoBot(sim, { build: o.build !== false, powers: o.powers !== false, free: !!o.free });
   const maxTicks = 60 * 60 * 30;
   while (sim.phase !== 'won' && sim.phase !== 'lost' && sim.tick < maxTicks) {
     bot.update();
@@ -30,6 +31,7 @@ const levels = ids.length ? ids.map((a) => LEVEL_BY_ID[a]).filter(Boolean) : LEV
 const heroArg = flag('hero');
 const heroes = heroArg === 'all' ? [null, ...Object.keys(HEROES)] : [heroArg];
 const challenge = /** @type {any} */ (flag('challenge'));
+const free = args.includes('--free');
 
 const zero = runLevel(LEVEL_BY_ID['1-1'], { build: false, powers: false });
 console.log(`[zero cats] 1-1 → ${zero.phase.toUpperCase()} (snacks ${zero.snacks}, wave ${zero.wave}/${zero.total})`);
@@ -37,9 +39,9 @@ console.log(`[zero cats] 1-1 → ${zero.phase.toUpperCase()} (snacks ${zero.snac
 let ok = zero.phase === 'lost';
 let losses = 0;
 for (const hero of heroes) {
-  if (hero || challenge) console.log(`── hero: ${hero ?? 'none'}${challenge ? `, challenge: ${challenge}` : ''}`);
+  if (hero || challenge || free) console.log(`── hero: ${hero ?? 'none'}${challenge ? `, challenge: ${challenge}` : ''}${free ? ', free placement' : ''}`);
   for (const l of levels) {
-    const r = runLevel(l, { hero, challenge });
+    const r = runLevel(l, { hero, challenge, free });
     const tag = r.phase === 'won' ? 'WIN ' : r.phase === 'lost' ? 'LOSE' : 'TIME';
     if (r.phase !== 'won') losses++;
     console.log(`${tag} ${r.id}  snacks ${String(r.snacks).padStart(2)}/${r.max}  ★${r.stars}  wave ${r.wave}/${r.total}  ${r.minutes}min  kills ${r.kills} leaks ${r.leaks}  spots ${r.spots}${hero ? `  hero Lv${r.heroLevel}` : ''}  [${r.towers.join(' ')}]`);

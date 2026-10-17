@@ -70,6 +70,7 @@ export class Hud {
         <div class="sticker treats" title="Treats (spend on cats)" aria-label="Treats">🐟 <b data-v="treats">0</b></div>
         <div class="sticker lives" title="Snacks left in the stash" aria-label="Snacks left">🍙 <b data-v="lives">20</b></div>
         <div class="sticker wave" title="Wave" aria-label="Wave">🌊 <b data-v="wave">0/0</b></div>
+        <div class="sticker cats" title="Cats seated / cat limit for this level" aria-label="Cats seated">🐱 <b data-v="cats">0/0</b></div>
         <div class="sticker chal" data-v="chal" hidden></div>
         <div class="sticker mood" data-v="mood" hidden></div>
         <div class="level-name" data-v="name"></div>
@@ -294,7 +295,12 @@ export class Hud {
       /** @type {HTMLElement} */ (this.bossbar.querySelector('.bb-phase')).textContent = `Phase ${boss.phase + 1}: ${names[boss.phase] ?? ''}`;
     });
     // Tray affordability + card refresh.
-    const napFull = sim.challenge === 'nap' && sim.towers.filter(Boolean).length >= 4;
+    const seated = sim.towers.filter(Boolean).length;
+    const napFull = seated >= sim.catCap;
+    set('cats', `${seated}/${sim.catCap}`, (v) => {
+      this.v.cats.textContent = v;
+      this.v.cats.parentElement?.classList.toggle('full', napFull);
+    });
     set('tray', `${Math.floor(sim.treats)}:${napFull}`, () => {
       for (const b of this.tray.querySelectorAll('.tray-btn')) {
         const cost = Number(/** @type {HTMLElement} */ (b).dataset.cost);
@@ -541,8 +547,8 @@ export class Hud {
     this.closeMenus();
     if (slot < 0) {
       const cost = CAT_BY_ID[cat].tiers[0].cost;
-      if (sim.challenge === 'nap' && sim.towers.filter(Boolean).length >= 4) {
-        this.toast('💤 Nap Time: only 4 cats allowed. Sell one to seat another.', 2);
+      if (sim.towers.filter(Boolean).length >= sim.catCap) {
+        this.toast(sim.challenge === 'nap' ? '💤 Nap Time: only 4 cats allowed. Sell one to seat another.' : `🐱 That's all ${sim.catCap} cats this level fits. Upgrade them, or sell one to seat another.`, 2.4);
         return;
       }
       if (sim.treats < cost) {

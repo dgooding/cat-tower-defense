@@ -197,6 +197,14 @@ test('free placement: anywhere off the path, away from the stash and other cats;
   // Positions survive a save.
   const r = Sim.restore(JSON.parse(JSON.stringify(s.serialize())), { level: level(), layout: LAYOUT });
   assert.deepEqual(r.towers.map((t) => t && [t.cat, t.x, t.y]), s.towers.map((t) => t && [t.cat, t.x, t.y]));
+  // Cat limit = the layout's suggested-spot count (4 here); moving a seated cat is still fine at the limit.
+  const c = sim();
+  assert.equal(c.catCap, LAYOUT.spots.length);
+  for (const [x, y] of [[300, 300], [600, 300], [900, 300], [1200, 300]]) assert.ok(c.place('pudding', x, y) >= 0);
+  assert.equal(c.canPlace(300, 700), 'limit');
+  assert.equal(c.move(0, 300, 700), '');
+  c.sell(1);
+  assert.ok(c.place('pudding', 600, 700) >= 0, 'selling frees a seat');
 });
 
 test('split: Tubby McSoak → 6 duckies; Carrier → 3 cadets', () => {
