@@ -64,7 +64,7 @@ Then open <http://localhost:5173/>.
 
 ## Publish
 
-Copy this whole `catastrophe/` folder into the repo your static host serves, commit, and push. All paths are relative, so it works at any URL. It is published in `dgooding/cat-tower-defense` (branch `main`) at `/catastrophe/`; Porkbun Static Hosting deploys every push.
+Copy this whole `catastrophe/` folder into the repo your static host serves, commit, and push. **First run `node tools/stamp.mjs`** (`--check` only verifies): it writes an import map into each page that loads every module as `file.js?v=<content hash>`, and stamps stylesheets and entry scripts the same way. Returning visitors then re-download only the files that changed and never mix old and new modules, with no build step. All paths are relative, so it works at any URL. It is published in `dgooding/cat-tower-defense` (branch `main`) at `/catastrophe/`; Porkbun Static Hosting deploys every push.
 
 ## Layout
 
