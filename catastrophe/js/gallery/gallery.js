@@ -540,7 +540,7 @@ function roomCard(id, art, c) {
       h('div', {}, [h('h4', { text: 'Levels' }), layoutRow]),
       h('div', {}, [
         h('h4', { text: 'Show' }),
-        h('div', { class: 'chips' }, [toggle('path', '🛤 Path'), toggle('spots', '🛋 Nap spots'), toggle('stash', '🍙 Snack Stash'), toggle('walk', '🚶 Walk test')]),
+        h('div', { class: 'chips' }, [toggle('path', '🛤 Path'), toggle('spots', '🐾 Suggested spots'), toggle('stash', '🍙 Snack Stash'), toggle('walk', '🚶 Walk test')]),
       ]),
       h('label', { class: 'light' }, [h('h4', { text: '🌅 Morning → dusk' }), slider]),
     ]),
