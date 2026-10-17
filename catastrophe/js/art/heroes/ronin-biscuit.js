@@ -711,7 +711,7 @@ export const spec = {
       { layer: 'neck', draw: swordArm },
       { layer: 'neck', draw: shoulderPads },
       { layer: 'neck', draw: swordHand },
-      { layer: 'head', draw: helmet },
+      { layer: 'head', hat: true, draw: helmet },
     ],
   },
   actions: {

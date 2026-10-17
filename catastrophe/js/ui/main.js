@@ -176,7 +176,7 @@ function firstRunTips(levelId) {
   if (p.seenTips || levelId !== '1-1') return;
   p.seenTips = true;
   saveProgress(p);
-  const tips = ['Tip: click a cushion to seat a cat. Click a cat to upgrade it.', 'Tip: "Call Early!" starts the next wave now for bonus treats.', 'Tip: press ` (backtick) if your manager walks by. We won\'t tell.'];
+  const tips = ['Tip: pick a cat in the tray, then click anywhere off the path. Click a seated cat to upgrade or move it.', 'Tip: each cat has a job. Slows at the bends, lasers down long straights, belly flops where the path doubles back.', 'Tip: "Call Early!" starts the next wave now for bonus treats.', 'Tip: press ` (backtick) if your manager walks by. We won\'t tell.'];
   tips.forEach((t, i) => setTimeout(() => game.mode === 'level' && hud.toast(t, 5), 2500 + i * 5200));
 }
 

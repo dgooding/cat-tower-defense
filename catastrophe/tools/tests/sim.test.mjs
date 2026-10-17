@@ -159,6 +159,46 @@ test('economy: build cost, kill bounty, sell refund 70%, early call bonus, Mochi
   assert.ok(!poor.build(0, 'pudding'));
 });
 
+test('free placement: anywhere off the path, away from the stash and other cats; moves between waves', () => {
+  const s = sim();
+  // The corridor runs along y=500; the stash sits at (1900, 500).
+  assert.equal(s.canPlace(700, 500), 'path');
+  assert.equal(s.canPlace(700, 430), 'path', 'cushion would poke onto the path');
+  assert.equal(s.canPlace(700, 380), '');
+  assert.equal(s.canPlace(1800, 400), 'stash');
+  assert.equal(s.canPlace(20, 300), 'bounds');
+  const a = s.place('pudding', 700, 380);
+  assert.equal(a, 0);
+  assert.deepEqual([s.towers[a].x, s.towers[a].y], [700, 380]);
+  assert.equal(s.canPlace(760, 390), 'cat', 'footprints may not overlap');
+  assert.equal(s.canPlace(700, 300), '', 'a row behind is fine');
+  assert.equal(s.place('pudding', 760, 390), -1);
+  const b = s.place('granny-purl', 850, 650);
+  assert.equal(b, 1);
+  assert.ok(s.events.some((ev) => ev.type === 'place' && ev.x === 850 && ev.y === 650));
+  // Sold slots are reused.
+  s.sell(a);
+  assert.equal(s.place('sriracha', 400, 300), 0);
+  // Moving: free between waves, not mid-wave, never onto the path.
+  assert.equal(s.move(1, 1000, 650), '');
+  assert.deepEqual([s.towers[1].x, s.towers[1].y], [1000, 650]);
+  assert.equal(s.move(1, 1000, 520), 'path');
+  inWave(s);
+  s.boundary = false;
+  assert.equal(s.move(1, 1100, 650), 'wave');
+  s.boundary = true;
+  assert.equal(s.move(1, 1100, 650), '');
+  // Barracks rally points follow the cat.
+  const m = s.place('mama-mittens', 300, 650);
+  const r0 = { ...s.towers[m].rally };
+  assert.equal(s.move(m, 1300, 650), '');
+  assert.ok(Math.abs(s.towers[m].rally.x - r0.x) > 500, 'kittens rally near the new spot');
+  assert.ok(s.kittens.filter((k) => k.towerId === s.towers[m].id).length > 0);
+  // Positions survive a save.
+  const r = Sim.restore(JSON.parse(JSON.stringify(s.serialize())), { level: level(), layout: LAYOUT });
+  assert.deepEqual(r.towers.map((t) => t && [t.cat, t.x, t.y]), s.towers.map((t) => t && [t.cat, t.x, t.y]));
+});
+
 test('split: Tubby McSoak → 6 duckies; Carrier → 3 cadets', () => {
   const s = sim();
   const tub = spawnAt(s, 'tubby-mcsoak', 500);

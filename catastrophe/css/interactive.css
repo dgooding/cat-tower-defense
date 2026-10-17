@@ -728,7 +728,7 @@ body.story-mode .ix-outlet {
 }
 .map-scroll {
   position: relative;
-  min-width: 780px;
+  min-width: min(780px, 100%);
   max-width: max(780px, calc((100vh - 250px) * 1.613 + 36px));
   margin: 0 auto;
   padding: 0 18px;
@@ -979,6 +979,54 @@ body.story-mode .ix-outlet {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+/* Level list: only on phones (see the responsive section). */
+.map-list {
+  display: none;
+}
+.ml-world h2 {
+  font: 700 15px/1.2 var(--font-display);
+  margin: 14px 0 6px;
+}
+.map-list ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.ml-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  background: #fffdf6;
+  box-shadow: 0 3px 0 var(--ink);
+  color: var(--ink);
+  text-decoration: none;
+}
+.ml-item.here {
+  background: #fde3e7;
+}
+.ml-item.locked {
+  border-color: rgba(59, 58, 74, 0.45);
+  box-shadow: 0 2px 0 rgba(59, 58, 74, 0.45);
+  background: #f1ebde;
+}
+.ml-item:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--ink);
+}
+.ml-id {
+  font: 700 14px/1 var(--font-display);
+  min-width: 2.6em;
+}
+.ml-name {
+  font: 600 14px/1.2 var(--font-display);
 }
 
 /* ---------- briefing ---------- */
@@ -1747,6 +1795,80 @@ a.polaroid:focus-visible {
   }
   .map-head {
     align-items: flex-start;
+  }
+}
+/* When the full map with its name tags won't fit: smaller pins and no tags; the level list
+   below the map carries the names, stars and locks. */
+@media (max-width: 860px) {
+  .map-wrap {
+    overflow-x: visible;
+    padding: 6px 0 10px;
+  }
+  .map-scroll {
+    min-width: 0;
+  }
+  .node-tag,
+  .map-note {
+    display: none;
+  }
+  .node-disc {
+    width: 40px;
+    height: 40px;
+  }
+  .map-node.boss .node-disc {
+    width: 48px;
+    height: 48px;
+  }
+  .map-node.boss .node-id,
+  .map-node.endless .node-id {
+    font-size: 22px;
+  }
+  .map-list {
+    display: block;
+    margin-bottom: 18px;
+  }
+}
+@media (max-width: 640px) {
+  .map-scroll {
+    padding: 0 10px;
+  }
+  .rod {
+    width: 14px;
+    border-radius: 7px;
+    top: -6px;
+    bottom: -6px;
+  }
+  .node-disc {
+    width: 30px;
+    height: 30px;
+    border-width: 2px;
+    box-shadow: 0 2px 0 var(--ink);
+  }
+  .map-node.boss .node-disc {
+    width: 36px;
+    height: 36px;
+  }
+  .node-id {
+    font-size: 10px;
+  }
+  .map-node.boss .node-id,
+  .map-node.endless .node-id {
+    font-size: 17px;
+  }
+  .map-node.locked .node-id {
+    font-size: 12px;
+  }
+  .region-label {
+    font-size: 9px;
+    padding: 2px 5px;
+    border-radius: 6px;
+  }
+  .region-label span {
+    display: none;
+  }
+  .region-label b {
+    font-size: 8px;
+    letter-spacing: 0.4px;
   }
 }
 

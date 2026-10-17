@@ -264,16 +264,17 @@ export class Game {
     }
   }
 
-  /** Spot index under a stage point (cushion or the cat sitting on it), or -1. @param {number} x @param {number} y */
-  spotAt(x, y) {
+  /** Slot of the seated cat under a stage point, or -1. @param {number} x @param {number} y */
+  towerAt(x, y) {
     if (!this.sim) return -1;
     let best = -1;
     let bestD = Infinity;
-    this.sim.layout.spots.forEach((p, i) => {
-      const dx = Math.abs(x - p.x);
-      const dy = y - p.y;
-      const hit = dx < 80 && dy < 40 && dy > (this.sim?.towers[i] ? -100 : -50);
-      const d = dx + Math.abs(dy + 20);
+    this.sim.towers.forEach((t, i) => {
+      if (!t) return;
+      const dx = Math.abs(x - t.x);
+      const dy = y - t.y;
+      const hit = dx < 62 && dy < 34 && dy > -105;
+      const d = dx + Math.abs(dy + 40);
       if (hit && d < bestD) {
         bestD = d;
         best = i;

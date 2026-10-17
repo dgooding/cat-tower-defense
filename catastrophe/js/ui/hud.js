@@ -1,10 +1,10 @@
 // @ts-check
 // In-level HUD: stickers, wave preview, Call Early, Cat Powers, speed/pause/mute,
-// radial build menu, upgrade card, pause + results overlays, banners and toasts. Plus pointer/keyboard input.
+// cat tray (seat cats anywhere off the path), upgrade card, pause + results overlays, banners and toasts. Plus pointer/keyboard input.
 import { CAT_BY_ID, nextTiers, TIER_LABELS } from '../data/cats.js';
 import { ENEMY_BY_ID, BOSS_PHASES } from '../data/enemies.js';
 import { TARGET_MODES } from '../data/ids.js';
-import { POWERS, SELL_REFUND } from '../sim/sim.js';
+import { POWERS, SELL_REFUND, PLACE_WHY } from '../sim/sim.js';
 import { CAT_ART, HERO_ART } from '../art/registry.js';
 import { catPortrait, enemyIcon, heroPortrait } from '../game/icons.js';
 import { VICTORY_LINES, DEFEAT_LINES, TIPS, quip } from '../data/quips.js';
@@ -54,8 +54,10 @@ export class Hud {
     this.ui = ui;
     this.hooks = hooks;
     this.selected = -1;
-    /** @type {'none'|'radial'|'card'} */
+    /** @type {'none'|'card'} */
     this.menu = 'none';
+    /** Seating a new cat (slot -1) or moving a seated one (slot ≥ 0); `drag` = started by dragging from the tray. @type {{cat:string, slot:number, drag:boolean, sx:number, sy:number}|null} */
+    this.placing = null;
     this.aiming = false;
     this.mouse = { x: 960, y: 540, inside: false, t: 0 };
     this.cardSig = '';
@@ -77,6 +79,7 @@ export class Hud {
         <button class="btn call" data-act="call" aria-label="Start the next wave">GO! ▶</button>
       </div>
       <div class="hud-bl"></div>
+      <div class="tray" role="toolbar" aria-label="Cats: pick one, then click the map to seat it"></div>
       <div class="hero-panel" hidden>
         <button class="hp-portrait" data-act="hero" aria-label="Select hero (H), then click the ground to move"><img alt=""><span class="hp-lv"></span></button>
         <div class="hp-info"><b class="hp-name"></b><div class="hp-bar"><i class="hp-fill"></i></div><div class="xp-bar"><i class="xp-fill"></i></div><span class="hp-state"></span></div>
@@ -116,6 +119,16 @@ export class Hud {
       this.powerBtns[p.id] = b;
     }
     this.heroPanel = /** @type {HTMLElement} */ (this.root.querySelector('.hero-panel'));
+    this.tray = /** @type {HTMLElement} */ (this.root.querySelector('.tray'));
+    this.tray.addEventListener('pointerdown', (e) => this.onTrayDown(e));
+    this.tray.addEventListener('keydown', (e) => {
+      const b = /** @type {HTMLElement} */ (e.target).closest('.tray-btn');
+      if (b && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.startPlacing(/** @type {string} */ (/** @type {HTMLElement} */ (b).dataset.cat), -1, false);
+      }
+    });
     this.root.addEventListener('click', (e) => this.onHudClick(e));
     this.bindInput();
     game.on((ev) => this.onEvent(ev));
@@ -145,7 +158,8 @@ export class Hud {
     // Challenge + hero setup.
     const chal = sim.challenge;
     this.v.chal.hidden = !chal;
-    this.v.chal.textContent = chal === 'iron' ? '🛡️ Iron Cat: 1 snack, no powers' : chal === 'nap' ? '💤 Nap Time: 4 cushions' : '';
+    this.v.chal.textContent = chal === 'iron' ? '🛡️ Iron Cat: 1 snack, no powers' : chal === 'nap' ? '💤 Nap Time: 4 cats max' : '';
+    this.buildTray();
     for (const b of Object.values(this.powerBtns)) b.hidden = chal === 'iron';
     this.v.mood.hidden = true;
     this.heroPanel.hidden = !sim.hero;
@@ -170,7 +184,7 @@ export class Hud {
     }
     if (o.resumed) this.toast('Welcome back! Resumed where you left off. 🐾');
     else if (!this.hooks.autoplay) {
-      this.setBanner('Place your cats!', 'Click a cushion to start');
+      this.setBanner('Place your cats!', 'Pick a cat below, then click anywhere off the path');
       if (lvl.newCat) this.toast(`New cat: ${CAT_BY_ID[lvl.newCat].name}! ${CAT_BY_ID[lvl.newCat].blurb}`, 5);
       for (const id of lvl.intro ?? []) {
         const d = ENEMY_BY_ID[id];
@@ -222,6 +236,9 @@ export class Hud {
       b.textContent = v ? '▶' : '⏸';
     });
     set('muted', isMuted(), (v) => (this.muteBtn.textContent = v ? '🔇' : '🔊'));
+    // Keep toasts off the Sucktator's plug (and its "mug me!" label): flip the stack to the top while it's below.
+    const plug = sim.enemies.find((e) => e.type === 'sucktator' && e.alive && e.phase === 1);
+    set('toastsTop', !!plug && plug.plugY > 560 && Math.abs(plug.plugX - 960) < 560, (v) => this.toasts.classList.toggle('top', v));
     for (const p of Object.values(POWERS)) {
       const cd = sim.powerCd[/** @type {import('../sim/sim.js').PowerId} */ (p.id)];
       const f = Math.round((cd / p.cd) * 100) / 100;
@@ -276,17 +293,21 @@ export class Hud {
       const names = /** @type {Record<string, string[]>} */ (BOSS_PHASES)[boss.type] ?? [];
       /** @type {HTMLElement} */ (this.bossbar.querySelector('.bb-phase')).textContent = `Phase ${boss.phase + 1}: ${names[boss.phase] ?? ''}`;
     });
-    // Radial affordability + card refresh.
-    if (this.menu === 'radial') {
-      for (const b of this.menus.querySelectorAll('.rad-btn')) {
+    // Tray affordability + card refresh.
+    const napFull = sim.challenge === 'nap' && sim.towers.filter(Boolean).length >= 4;
+    set('tray', `${Math.floor(sim.treats)}:${napFull}`, () => {
+      for (const b of this.tray.querySelectorAll('.tray-btn')) {
         const cost = Number(/** @type {HTMLElement} */ (b).dataset.cost);
-        b.classList.toggle('poor', sim.treats < cost);
+        b.classList.toggle('poor', sim.treats < cost || napFull);
       }
-    } else if (this.menu === 'card') {
+    });
+    set('trayHint', this.game.renderer.highlightEmpty && !this.placing, (v) => this.tray.classList.toggle('hint', v));
+    if (this.menu === 'card') {
       const t = sim.towers[this.selected];
-      const sig = t ? `${t.id}:${t.tier}:${t.mode}:${Math.floor(sim.treats)}` : 'x';
+      const sig = t ? `${t.id}:${t.tier}:${t.mode}:${Math.floor(sim.treats)}:${sim.betweenWaves}` : 'x';
       if (sig !== this.cardSig) this.openCard(this.selected);
     }
+    if (this.placing) this.refreshGhost();
     this.game.renderer.selectedSpot = this.selected;
     this.game.renderer.aim = this.aiming && this.mouse.inside ? { x: this.mouse.x, y: this.mouse.y, r: POWERS.mug.radius } : null;
   }
@@ -350,7 +371,7 @@ export class Hud {
       case 'sock':
         if (!this.seenSock) {
           this.seenSock = true;
-          this.toast('🧦 A sock fell on a cushion! Cats under socks nap at half speed until the next wave.', 5);
+          this.toast('🧦 A sock fell! No seating on it, and a cat under it naps at half speed until the next wave.', 5);
         }
         break;
       case 'unplug':
@@ -392,14 +413,19 @@ export class Hud {
       if (!this.active || this.ended) return;
       const p = this.game.toStage(e.clientX, e.clientY);
       this.mouse = { x: p.x, y: p.y, inside: true, t: performance.now() };
+      if (e.button === 2) return;
       if (this.aiming) {
         this.firePower('mug', p.x, p.y);
         return;
       }
+      if (this.placing) {
+        this.commitPlacing(p.x, p.y, e.shiftKey);
+        return;
+      }
       const r = this.game.renderer;
-      const spot = this.game.spotAt(p.x, p.y);
+      const slot = this.game.towerAt(p.x, p.y);
       // Hero: click to select, click the ground to walk there.
-      if (this.sim?.hero && spot < 0) {
+      if (this.sim?.hero && slot < 0) {
         if (this.game.heroAt(p.x, p.y)) {
           r.heroSelected = !r.heroSelected;
           this.closeMenus();
@@ -412,31 +438,193 @@ export class Hud {
         }
       }
       r.heroSelected = false;
-      if (spot < 0) {
+      if (slot < 0 || (slot === this.selected && this.menu !== 'none')) {
         this.closeMenus();
         return;
       }
-      if (spot === this.selected && this.menu !== 'none') {
-        this.closeMenus();
-        return;
+      this.openCard(slot);
+    });
+    canvas.addEventListener('contextmenu', (e) => {
+      if (this.placing || this.aiming) {
+        e.preventDefault();
+        this.cancelPlacing();
+        this.aiming = false;
       }
-      if (this.sim?.towers[spot]) this.openCard(spot);
-      else this.openRadial(spot);
     });
     canvas.addEventListener('pointermove', (e) => {
       const p = this.game.toStage(e.clientX, e.clientY);
       this.mouse = { x: p.x, y: p.y, inside: true, t: performance.now() };
       if (!this.active) return;
-      const spot = e.pointerType === 'mouse' ? this.game.spotAt(p.x, p.y) : -1;
-      this.game.renderer.hoverSpot = spot;
+      if (this.placing) {
+        this.refreshGhost();
+        canvas.style.cursor = 'crosshair';
+        return;
+      }
+      const slot = e.pointerType === 'mouse' ? this.game.towerAt(p.x, p.y) : -1;
+      this.game.renderer.hoverSpot = slot;
       const onHero = this.game.heroAt(p.x, p.y);
-      canvas.style.cursor = this.aiming || this.game.renderer.heroSelected ? 'crosshair' : spot >= 0 || onHero ? 'pointer' : '';
+      canvas.style.cursor = this.aiming || this.game.renderer.heroSelected ? 'crosshair' : slot >= 0 || onHero ? 'pointer' : '';
     });
     canvas.addEventListener('pointerleave', () => {
       this.mouse.inside = false;
       this.game.renderer.hoverSpot = -1;
+      if (this.placing && !this.placing.drag) this.game.renderer.ghost = null;
+    });
+    // Dragging a cat out of the tray: follow the pointer anywhere, drop on release.
+    window.addEventListener('pointermove', (e) => {
+      const pl = this.placing;
+      if (!pl || !pl.drag || !this.active) return;
+      const p = this.game.toStage(e.clientX, e.clientY);
+      this.mouse = { x: p.x, y: p.y, inside: true, t: performance.now() };
+      this.refreshGhost();
+    });
+    window.addEventListener('pointerup', (e) => {
+      const pl = this.placing;
+      if (!pl || !pl.drag || !this.active) return;
+      pl.drag = false;
+      const p = this.game.toStage(e.clientX, e.clientY);
+      // A click on the tray (no real drag) keeps the cat in hand for click-to-place.
+      if (Math.hypot(e.clientX - pl.sx, e.clientY - pl.sy) < 12) return;
+      if (this.overHud(p.x, p.y)) return this.cancelPlacing();
+      this.commitPlacing(p.x, p.y, e.shiftKey);
     });
     window.addEventListener('keydown', (e) => this.onKey(e));
+  }
+
+  /** @param {PointerEvent} e */
+  onTrayDown(e) {
+    const b = /** @type {HTMLElement|null} */ (/** @type {HTMLElement} */ (e.target).closest('.tray-btn'));
+    if (!b || !this.active || this.ended) return;
+    unlockAudio();
+    e.preventDefault();
+    const cat = /** @type {string} */ (b.dataset.cat);
+    if (this.placing && this.placing.cat === cat && this.placing.slot < 0 && !this.placing.drag) {
+      this.cancelPlacing();
+      return;
+    }
+    this.startPlacing(cat, -1, true, e.clientX, e.clientY);
+  }
+
+  /** One button per cat the level unlocks. */
+  buildTray() {
+    const sim = this.sim;
+    this.tray.innerHTML = '';
+    if (!sim) return;
+    sim.level.cats.forEach((id, i) => {
+      const def = CAT_BY_ID[id];
+      const cost = def.tiers[0].cost;
+      const url = catPortrait(id);
+      const img = url ? `<img src="${url}" alt="" draggable="false">` : `<span class="rad-emoji">${def.icon}</span>`;
+      const b = h(`<button class="tray-btn" data-cat="${id}" data-cost="${cost}" aria-label="${esc(def.name)}, ${cost} treats, key ${i + 1}" title="${esc(def.name)} (${i + 1}) — ${esc(def.blurb)}">${img}<span class="tray-cost">${cost}🐟</span><span class="tray-key">${i + 1}</span></button>`);
+      this.tray.appendChild(b);
+    });
+  }
+
+  /** Is a stage point under a HUD control (where a cat would be hidden)? @param {number} x @param {number} y */
+  overHud(x, y) {
+    for (const el of [this.tray, this.root.querySelector('.hud-bl'), this.root.querySelector('.hud-br'), this.heroPanel]) {
+      const n = /** @type {HTMLElement|null} */ (el);
+      if (!n || n.hidden || !n.offsetWidth) continue;
+      const pad = 12;
+      if (x > n.offsetLeft - pad && x < n.offsetLeft + n.offsetWidth + pad && y > n.offsetTop - pad && y < n.offsetTop + n.offsetHeight + 40) return true;
+    }
+    return false;
+  }
+
+  /**
+   * Pick up a cat to seat (slot -1) or a seated cat to move (slot ≥ 0).
+   * @param {string} cat @param {number} slot @param {boolean} drag @param {number} [sx] @param {number} [sy]
+   */
+  startPlacing(cat, slot, drag, sx = 0, sy = 0) {
+    const sim = this.sim;
+    if (!sim) return;
+    this.closeMenus();
+    if (slot < 0) {
+      const cost = CAT_BY_ID[cat].tiers[0].cost;
+      if (sim.challenge === 'nap' && sim.towers.filter(Boolean).length >= 4) {
+        this.toast('💤 Nap Time: only 4 cats allowed. Sell one to seat another.', 2);
+        return;
+      }
+      if (sim.treats < cost) {
+        this.toast(`Not enough treats for ${CAT_BY_ID[cat].name} (${cost} 🐟)`, 1.6);
+        sfx('pop', { pitch: 0.5 });
+        return;
+      }
+    } else if (!sim.betweenWaves) {
+      this.toast('Cats can only move between waves. (Or sell and reseat.)', 1.8);
+      return;
+    }
+    this.placing = { cat, slot, drag, sx, sy };
+    this.game.renderer.highlightEmpty = false;
+    for (const b of this.tray.querySelectorAll('.tray-btn')) b.classList.toggle('on', /** @type {HTMLElement} */ (b).dataset.cat === cat && slot < 0);
+    // Keyboard / no pointer yet: start from the seated cat or the best free suggested spot.
+    if (!this.mouse.inside || performance.now() - this.mouse.t > 4000) {
+      const t = slot >= 0 ? sim.towers[slot] : null;
+      const p = t ?? sim.layout.spots.find((_, i) => sim.spotUsable(i)) ?? { x: 960, y: 540 };
+      this.mouse = { x: p.x, y: p.y, inside: true, t: performance.now() };
+    }
+    this.refreshGhost();
+  }
+
+  /** Recompute the ghost at the pointer: where, and why not. */
+  refreshGhost() {
+    const sim = this.sim;
+    const pl = this.placing;
+    const r = this.game.renderer;
+    if (!sim || !pl || !this.mouse.inside) {
+      r.ghost = null;
+      return;
+    }
+    const { x, y } = this.mouse;
+    let why = this.overHud(x, y) ? 'Behind the buttons' : '';
+    if (!why) {
+      const k = pl.slot >= 0 ? (sim.betweenWaves ? sim.canPlace(x, y, pl.slot) : 'wave') : sim.canPlace(x, y);
+      why = k ? PLACE_WHY[k] : '';
+    }
+    const def = CAT_BY_ID[pl.cat];
+    const cost = def.tiers[0].cost;
+    if (!why && pl.slot < 0 && sim.treats < cost) why = `Need ${cost} 🐟`;
+    const t = pl.slot >= 0 ? sim.towers[pl.slot] : null;
+    const range = t ? sim.rangeOf(t) : def.tiers[0].range;
+    r.ghost = { cat: pl.cat, x, y, why, label: why || (pl.slot >= 0 ? 'Move here' : `${def.name} · ${cost} 🐟`), range, slot: pl.slot };
+  }
+
+  /** Try to seat / move the cat in hand at (x, y). @param {number} x @param {number} y @param {boolean} [keep] keep placing the same cat */
+  commitPlacing(x, y, keep = false) {
+    const sim = this.sim;
+    const pl = this.placing;
+    if (!sim || !pl) return;
+    this.mouse = { x, y, inside: true, t: performance.now() };
+    this.refreshGhost();
+    const why = this.game.renderer.ghost?.why;
+    if (why) {
+      this.toast(`🙀 ${why}`, 1.4);
+      sfx('pop', { pitch: 0.5 });
+      if (pl.drag) pl.drag = false;
+      return;
+    }
+    if (pl.slot >= 0) {
+      if (sim.move(pl.slot, x, y) === '') {
+        sfx('pop', { pitch: 1.3 });
+        const slot = pl.slot;
+        this.cancelPlacing();
+        this.openCard(slot);
+      }
+      return;
+    }
+    const slot = sim.place(pl.cat, x, y);
+    if (slot < 0) return;
+    const cost = CAT_BY_ID[pl.cat].tiers[0].cost;
+    if (keep && sim.treats >= cost) {
+      pl.drag = false;
+      this.refreshGhost();
+    } else this.cancelPlacing();
+  }
+
+  cancelPlacing() {
+    this.placing = null;
+    this.game.renderer.ghost = null;
+    for (const b of this.tray.querySelectorAll('.tray-btn.on')) b.classList.remove('on');
   }
 
   /** @param {KeyboardEvent} e */
@@ -446,6 +634,7 @@ export class Hud {
     const k = e.key.toLowerCase();
     if (k === 'escape') {
       if (this.aiming) this.aiming = false;
+      else if (this.placing) this.cancelPlacing();
       else if (this.game.renderer.heroSelected) this.game.renderer.heroSelected = false;
       else if (this.menu !== 'none') this.closeMenus();
       else if (!this.ended) this.togglePause();
@@ -453,9 +642,20 @@ export class Hud {
       return;
     }
     if (!this.overlay.hidden && k !== ' ') return;
-    // Keyboard reach for the build/upgrade menus: Tab / Shift+Tab walk the cushions
-    // (when focus isn't already inside a menu), Enter on a focused button activates it.
-    if (k === 'tab' && !this.menus.contains(document.activeElement)) {
+    // Keyboard placing: arrows nudge the cat in hand (Shift = bigger steps), Enter seats it.
+    if (this.placing && (k.startsWith('arrow') || k === 'enter')) {
+      e.preventDefault();
+      if (k === 'enter') return this.commitPlacing(this.mouse.x, this.mouse.y, e.shiftKey);
+      const step = e.shiftKey ? 90 : 30;
+      const dx = k === 'arrowleft' ? -step : k === 'arrowright' ? step : 0;
+      const dy = k === 'arrowup' ? -step : k === 'arrowdown' ? step : 0;
+      this.mouse = { x: Math.max(0, Math.min(1920, this.mouse.x + dx)), y: Math.max(0, Math.min(1080, this.mouse.y + dy)), inside: true, t: performance.now() };
+      this.refreshGhost();
+      return;
+    }
+    // Keyboard reach for seated cats: Tab / Shift+Tab walk them (when focus isn't already inside a menu).
+    if (k === 'tab' && !this.menus.contains(document.activeElement) && !this.tray.contains(document.activeElement)) {
+      if (!this.sim?.towers.some(Boolean)) return;
       e.preventDefault();
       this.cycleSpot(e.shiftKey ? -1 : 1);
       return;
@@ -475,13 +675,17 @@ export class Hud {
     else if (k === 'h' && this.sim?.hero?.alive) {
       this.closeMenus();
       this.game.renderer.heroSelected = !this.game.renderer.heroSelected;
-    } else if (/^[1-8]$/.test(k) && this.selected >= 0 && this.sim && !this.sim.towers[this.selected]) {
+    } else if (/^[1-8]$/.test(k) && this.sim) {
       const cat = this.sim.level.cats[Number(k) - 1];
-      if (cat) this.build(this.selected, cat);
+      if (cat) this.startPlacing(cat, -1, false);
     } else if (k === 'u' && this.menu === 'card') {
       const t = this.sim?.towers[this.selected];
       if (t && nextTiers(t.tier).length === 1) this.upgrade(this.selected);
     } else if (k === 's' && this.menu === 'card') this.sell(this.selected);
+    else if (k === 'g' && this.menu === 'card') {
+      const t = this.sim?.towers[this.selected];
+      if (t) this.startPlacing(t.cat, this.selected, false);
+    }
   }
 
   /** @param {MouseEvent} e */
@@ -561,7 +765,7 @@ export class Hud {
     if (!sim.heroAbility(which)) this.toast(`${name}: nothing in reach. Move closer to the action!`, 1.8);
   }
 
-  /** Keyboard: select the next/previous cushion and open its menu. @param {number} dir */
+  /** Keyboard: select the next/previous seated cat and open its card. @param {number} dir */
   cycleSpot(dir) {
     const sim = this.sim;
     if (!sim) return;
@@ -569,11 +773,11 @@ export class Hud {
     let i = this.selected;
     for (let k = 0; k < n; k++) {
       i = (i + dir + n) % n;
-      if (sim.towers[i] || sim.spotUsable(i)) break;
+      if (sim.towers[i]) break;
     }
-    if (sim.towers[i]) this.openCard(i);
-    else this.openRadial(i);
-    const first = /** @type {HTMLElement|null} */ (this.menus.querySelector('.rad-btn, .up-btn, .cu-close'));
+    if (!sim.towers[i]) return;
+    this.openCard(i);
+    const first = /** @type {HTMLElement|null} */ (this.menus.querySelector('.up-btn, .cu-close'));
     first?.focus({ preventScroll: true });
   }
 
@@ -587,23 +791,7 @@ export class Hud {
     else this.showPause();
   }
 
-  // ───────────────────────── build / upgrade ─────────────────────────
-  /** @param {number} spot @param {string} cat */
-  build(spot, cat) {
-    const sim = this.sim;
-    if (!sim) return;
-    const cost = CAT_BY_ID[cat].tiers[0].cost;
-    if (sim.treats < cost) {
-      this.toast(`Not enough treats for ${CAT_BY_ID[cat].name} (${cost} 🐟)`, 1.6);
-      sfx('pop', { pitch: 0.5 });
-      return;
-    }
-    if (sim.build(spot, cat)) {
-      this.closeMenus();
-      this.game.renderer.preview = null;
-    }
-  }
-
+  // ───────────────────────── upgrade / sell / move ─────────────────────────
   /** @param {number} spot @param {number} [branch] */
   upgrade(spot, branch) {
     const sim = this.sim;
@@ -627,6 +815,7 @@ export class Hud {
   }
 
   closeMenus() {
+    this.cancelPlacing();
     this.menus.innerHTML = '';
     this.menu = 'none';
     this.selected = -1;
@@ -643,47 +832,6 @@ export class Hud {
   }
 
   /** @param {number} spot */
-  openRadial(spot) {
-    const sim = this.sim;
-    if (!sim) return;
-    this.closeMenus();
-    if (sim.spotLocked[spot]) {
-      this.toast('💤 Nap Time challenge: only the first 4 cushions are open.', 2);
-      return;
-    }
-    if (sim.sockSpot === spot) {
-      this.toast('🧦 A sock is on that cushion until the next wave.', 2);
-      return;
-    }
-    this.selected = spot;
-    this.menu = 'radial';
-    const p = sim.layout.spots[spot];
-    const cats = sim.level.cats;
-    const R = cats.length <= 2 ? 110 : cats.length <= 4 ? 125 : 150;
-    const cx = Math.max(R + 70, Math.min(1920 - R - 70, p.x));
-    const cy = Math.max(R + 80, Math.min(1080 - R - 90, p.y - 50));
-    const wrap = h(`<div class="radial" role="menu" aria-label="Seat a cat on this cushion" style="left:${cx}px;top:${cy}px"><div class="rad-ring" style="width:${R * 2}px;height:${R * 2}px"></div><button class="rad-close" aria-label="Close build menu">✕</button></div>`);
-    cats.forEach((id, i) => {
-      const def = CAT_BY_ID[id];
-      const cost = def.tiers[0].cost;
-      const a = -Math.PI / 2 + (i / cats.length) * Math.PI * 2;
-      const url = catPortrait(id);
-      const img = url ? `<img src="${url}" alt="">` : `<span class="rad-emoji">${def.icon}</span>`;
-      const b = h(`<button class="rad-btn${sim.treats < cost ? ' poor' : ''}" role="menuitem" aria-label="${esc(def.name)}, ${cost} treats, key ${i + 1}" data-cat="${id}" data-cost="${cost}" style="left:${Math.cos(a) * R}px;top:${Math.sin(a) * R}px" title="${esc(def.name)} — ${esc(def.blurb)}">${img}<span class="rad-cost">${cost} 🐟</span><span class="rad-key">${i + 1}</span><span class="rad-name">${esc(def.name)}</span></button>`);
-      const show = () => (this.game.renderer.preview = { spot, range: def.tiers[0].range });
-      const hide = () => (this.game.renderer.preview = null);
-      b.addEventListener('pointerenter', show);
-      b.addEventListener('pointerleave', hide);
-      b.addEventListener('focus', show);
-      b.addEventListener('blur', hide);
-      b.addEventListener('click', () => this.build(spot, id));
-      wrap.appendChild(b);
-    });
-    /** @type {HTMLElement} */ (wrap.querySelector('.rad-close')).addEventListener('click', () => this.closeMenus());
-    this.menus.appendChild(wrap);
-  }
-
-  /** @param {number} spot */
   openCard(spot) {
     const sim = this.sim;
     if (!sim) return;
@@ -692,10 +840,11 @@ export class Hud {
       this.closeMenus();
       return;
     }
+    if (this.placing) this.cancelPlacing();
     this.menus.innerHTML = '';
     this.selected = spot;
     this.menu = 'card';
-    this.cardSig = `${t.id}:${t.tier}:${t.mode}:${Math.floor(sim.treats)}`;
+    this.cardSig = `${t.id}:${t.tier}:${t.mode}:${Math.floor(sim.treats)}:${sim.betweenWaves}`;
     const def = t.def;
     const artTier = CAT_ART[t.cat]?.tiers?.find((x) => x.id === TIER_LABELS[t.tier]);
     const url = catPortrait(t.cat);
@@ -710,13 +859,14 @@ export class Hud {
     const aims = def.kind === 'barracks' || def.kind === 'flop' ? TARGET_MODES.filter((m) => m !== 'last') : TARGET_MODES;
     const modes = def.kind === 'barracks' ? '' : `<div class="modes" role="group" aria-label="Targeting">${aims.map((m) => `<button class="chip${t.mode === m ? ' on' : ''}" data-mode="${m}" aria-pressed="${t.mode === m}">${m[0].toUpperCase() + m.slice(1)}</button>`).join('')}</div>`;
     const refund = Math.floor(t.spent * SELL_REFUND);
+    const canMove = sim.betweenWaves;
     const card = h(`<div class="card-up" role="dialog" aria-label="${esc(def.name)} upgrades">
       <span class="tape"></span>
       <div class="cu-head">${url ? `<img src="${url}" alt="">` : `<span class="rad-emoji">${def.icon}</span>`}<div><b>${esc(def.name)}</b><small>${esc(artTier?.label ?? TIER_LABELS[t.tier] + ' · ' + t.s.name)}</small></div><button class="cu-close" aria-label="Close upgrade card">✕</button></div>
       <div class="cu-stats">${esc(statLine(def, t.s))}${t.kills ? ` · 🏆 ${t.kills}` : ''}</div>
       <div class="cu-up">${up}</div>
       ${modes}
-      <div class="cu-foot"><button class="btn sell" data-sell aria-label="Sell for ${refund} treats">Sell +${refund} 🐟</button><span class="cu-hint">U upgrade · S sell · Tab next cushion</span></div>
+      <div class="cu-foot"><button class="btn move${canMove ? '' : ' poor'}" data-move aria-label="Move this cat (free between waves)" title="${canMove ? 'Pick a new spot (free between waves)' : 'Cats can only move between waves'}">↔ Move</button><button class="btn sell" data-sell aria-label="Sell for ${refund} treats">Sell +${refund} 🐟</button><span class="cu-hint">U upgrade · G move · S sell · Tab next cat</span></div>
     </div>`);
     card.addEventListener('click', (e) => {
       const el = /** @type {HTMLElement} */ (e.target).closest('button');
@@ -726,12 +876,12 @@ export class Hud {
       else if (el.dataset.mode) {
         sim.setTargeting(spot, /** @type {any} */ (el.dataset.mode));
         this.openCard(spot);
-      } else if (el.hasAttribute('data-sell')) this.sell(spot);
+      } else if (el.hasAttribute('data-move')) this.startPlacing(t.cat, spot, false);
+      else if (el.hasAttribute('data-sell')) this.sell(spot);
     });
-    const p = sim.layout.spots[spot];
     const W = 400;
     const H = 330;
-    this.place(card, p.x > 1200 ? p.x - W - 90 : p.x + 90, p.y - H / 2 - 40, W, H);
+    this.place(card, t.x > 1200 ? t.x - W - 90 : t.x + 90, t.y - H / 2 - 40, W, H);
     this.menus.appendChild(card);
   }
 

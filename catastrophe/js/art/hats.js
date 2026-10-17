@@ -3,7 +3,7 @@
 // on the head using Geo from catrig.js. The head center is (0, g.hy), its half-width is g.hrx (76 * headW),
 // the crown is about g.hy - 56 and the ears rise to about g.hy - 96 at x = ±58. Every hat scales its width
 // with g.hrx so it sits right on Chonkington's huge head and on a tiny kitten alike.
-// Callers wear a hat via: rig.extra = [{ layer: 'head', draw: HATS[id].draw }].
+// Callers wear a hat via: rig.extra = [{ layer: 'head', hat: true, draw: HATS[id].draw }] (hat: true hides built-in hats).
 import { ellipsePts, soft } from './brush.js';
 import { star } from './cats/catrig.js';
 import { hash2 } from '../core/rng.js';

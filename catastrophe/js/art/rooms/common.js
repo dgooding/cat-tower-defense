@@ -30,6 +30,7 @@ export const STAGE_H = 1080;
  * @property {string} id @property {string} name
  * @property {{fill:string, edge:string, speck?:string, width?:number}} pathStyle
  * @property {{base?:string, dark?:string}} [cushion] nap-spot cushion colors
+ * @property {'cushion'|'deck'|'cloud'} [seat] what a placed cat sits on: a cushion (default), a round wooden deck, or a little cloud
  * @property {(ctx:CanvasRenderingContext2D, pen:Pen, t:number, o:RoomOpts) => void} drawBack scenery behind the path
  * @property {(ctx:CanvasRenderingContext2D, pen:Pen, t:number, o:RoomOpts) => void} [drawMid] scenery drawn after the path, before characters (e.g. bridges, props beside the path)
  * @property {(ctx:CanvasRenderingContext2D, pen:Pen, t:number, o:RoomOpts) => void} [drawFront] foreground framing over everything (edges only, keep the play area readable)
@@ -146,6 +147,40 @@ export function drawNapSpot(pen, x, y, lw, c, highlight = false) {
   }
   drawCushion(pen, lw / k, c?.base, c?.dark);
   ctx.restore();
+}
+
+/**
+ * What a placed cat sits on, themed per world: a cushion; a cushion on a round wooden deck
+ * (bathhouse: reads as a floating tub-lid on water); or a cushion on a little cloud (sky islands).
+ * @param {Pen} pen @param {number} x @param {number} y @param {number} lw @param {RoomSpec|null|undefined} room
+ */
+export function drawSeat(pen, x, y, lw, room) {
+  const ctx = pen.ctx;
+  const seat = room?.seat ?? 'cushion';
+  if (seat === 'deck') {
+    pen.blob(ellipsePts(x, y + 8, 82, 30, 28), soft(ctx, x, y + 2, 82, '#C99566', '#A8703F', '#7A4B27'), { width: lw });
+    ctx.save();
+    ctx.strokeStyle = 'rgba(70,40,20,0.45)';
+    ctx.lineWidth = 2;
+    for (const dy of [-10, 4, 18]) {
+      const w = Math.sqrt(Math.max(0, 1 - ((dy - 8) / 30) ** 2)) * 76;
+      ctx.beginPath();
+      ctx.moveTo(x - w, y + dy);
+      ctx.lineTo(x + w, y + dy);
+      ctx.stroke();
+    }
+    ctx.restore();
+  } else if (seat === 'cloud') {
+    const puffs = [
+      [-58, 10, 30],
+      [-26, 2, 36],
+      [14, 0, 38],
+      [52, 8, 30],
+      [0, 18, 44],
+    ];
+    for (const [dx, dy, r] of puffs) pen.blob(ellipsePts(x + dx, y + dy, r, r * 0.62, 16), soft(ctx, x + dx, y + dy - 6, r, '#FFFFFF', '#E6E1F7', '#B9B0E0'), { width: lw * 0.8 });
+  }
+  drawNapSpot(pen, x, y - (seat === 'cushion' ? 0 : 6), lw, room?.cushion);
 }
 
 /**

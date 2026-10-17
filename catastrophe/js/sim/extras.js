@@ -40,16 +40,18 @@ export function onWaveStart(sim) {
     if (sim.waveIdx % g.every === 0 && sim.waveIdx < sim.totalWaves) sim.emit({ type: 'screensWarn', next: (block + 1) % sim.tracks.length });
   }
   if (g?.kind === 'socks') {
+    // Land on one of the layout's landing points, preferring one without a cat under it.
     const free = [];
     const any = [];
-    for (let i = 0; i < sim.towers.length; i++) {
-      if (sim.spotLocked[i]) continue;
+    for (let i = 0; i < sim.layout.spots.length; i++) {
+      const p = sim.layout.spots[i];
       any.push(i);
-      if (!sim.towers[i]) free.push(i);
+      if (!sim.catNear(p.x, p.y)) free.push(i);
     }
     const pool = free.length ? free : any;
     sim.sockSpot = pool.length ? pool[Math.floor(sim.rng() * pool.length)] : -1;
-    if (sim.sockSpot >= 0) sim.emit({ type: 'sock', spot: sim.sockSpot });
+    const s = sim.sockAt();
+    if (s) sim.emit({ type: 'sock', spot: sim.sockSpot, x: s.x, y: s.y });
   }
   if (sim.endless) {
     if (sim.waveIdx % 10 === 0) {

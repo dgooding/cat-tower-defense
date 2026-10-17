@@ -29,8 +29,8 @@ const GIMMICKS = {
   '2-1': { kind: 'screens', every: 3, note: 'The shoji screens slide every 3 waves, switching routes. Watch for the arrow!' },
   // Enemies under the kotatsu quilt are hidden from cats (the room redraws the quilt over them).
   '2-2': { kind: 'kotatsu', x: 960, y: 650, rx: 180, ry: 120, note: 'Enemies under the kotatsu are hidden from your cats. Cover both sides!' },
-  // A sock falls from the laundry line each wave and covers a cushion for that wave.
-  '2-3': { kind: 'socks', note: 'Laundry day: a sock lands on a cushion every wave. Socked cats nap at half speed.' },
+  // A sock falls from the laundry line each wave and lands on a patch of floor for that wave.
+  '2-3': { kind: 'socks', note: 'Laundry day: a sock lands on the floor every wave. No seating there, and a cat it lands on naps at half speed.' },
   // Rain makes Spritz tougher, squirt more often and soak longer.
   '3-1': { kind: 'rain', hp: 1.25, wet: 1.5, every: 0.7, note: 'Rain! Spritz is tougher, squirts more often and soaks longer.' },
 };

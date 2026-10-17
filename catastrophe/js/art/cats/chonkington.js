@@ -482,7 +482,7 @@ const NECK = [{ layer: 'neck', draw: jowls }];
 /** @type {Accessory[]} */
 const HEAD = [
   { layer: 'head', draw: jowlBlend },
-  { layer: 'head', draw: crown },
+  { layer: 'head', hat: true, draw: crown },
 ];
 
 /** @type {CatSpec} */

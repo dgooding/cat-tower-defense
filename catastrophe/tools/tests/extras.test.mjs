@@ -88,17 +88,24 @@ test('gimmick 2-2: enemies under the kotatsu are hidden from cats', () => {
   assert.ok(s.canTarget(t, out));
 });
 
-test('gimmick 2-3: a sock covers a free cushion each wave and blocks building there', () => {
+test('gimmick 2-3: a sock lands on an empty landing point each wave and blocks building there', () => {
   const s = new Sim({ level: level({ waves: waves(3), gimmick: { kind: 'socks', note: '' } }), layout: LAYOUT, seed: 9 });
   s.build(0, 'pudding');
   nextWave(s);
-  assert.ok(s.sockSpot >= 0 && s.sockSpot !== 0, 'prefers an empty cushion');
+  const sock = s.sockAt();
+  assert.ok(sock && s.sockSpot !== 0, 'prefers a point without a cat');
   assert.ok(!s.spotUsable(s.sockSpot));
-  assert.ok(!s.build(s.sockSpot, 'pudding'));
+  assert.equal(s.canPlace(sock.x + 20, sock.y), 'sock');
+  assert.equal(s.place('pudding', sock.x, sock.y), -1);
+  assert.ok(!s.underSock(s.towers[0]));
+  // A cat sitting where the sock lands naps at half speed.
+  const t = s.towers[0];
+  s.sockSpot = 0;
+  assert.ok(s.underSock(t));
   const before = s.sockSpot;
   nextWave(s);
   assert.ok(s.sockSpot >= 0);
-  assert.ok(s.spotUsable(before) || s.sockSpot === before);
+  assert.ok(s.spotUsable(before) || s.sockSpot === before || s.towers.some((q) => q && q.spot === before));
 });
 
 test('gimmick 3-1: rain makes Spritz tougher and soakier', () => {
@@ -264,16 +271,20 @@ test('Nine Lives saves Ronin once per wave', () => {
   assert.ok(s.events.some((ev) => ev.type === 'nineLives'));
 });
 
-test('challenges: Iron Cat = 1 snack and no powers; Nap Time = only the first 4 cushions', () => {
+test('challenges: Iron Cat = 1 snack and no powers; Nap Time = at most 4 cats', () => {
   const iron = new Sim({ level: level(), layout: LAYOUT, seed: 1, challenge: 'iron' });
   assert.equal(iron.lives, 1);
   assert.equal(iron.maxLives, 1);
   assert.ok(!iron.usePower('yowl'));
   const nap = new Sim({ level: level(), layout: LAYOUT, seed: 1, challenge: 'nap' });
-  assert.ok(nap.build(3, 'pudding'));
+  for (const i of [0, 1, 2, 3]) assert.ok(nap.build(i, 'pudding'));
   assert.ok(!nap.build(4, 'pudding'));
-  assert.ok(!nap.build(5, 'pudding'));
-  assert.deepEqual(nap.spotLocked, [false, false, false, false, true, true]);
+  assert.ok(!nap.spotUsable(4), 'suggested spots report the limit too');
+  assert.equal(nap.move(0, 600, 900), '', 'moving a seated cat is fine at the limit');
+  assert.equal(nap.canPlace(900, 900), 'limit');
+  nap.sell(1);
+  assert.equal(nap.canPlace(900, 900), '', 'selling frees a seat');
+  assert.ok(nap.place('pudding', 900, 900) >= 0);
   const snap = JSON.parse(JSON.stringify(nap.serialize()));
   const r = Sim.restore(snap, { level: level(), layout: LAYOUT });
   assert.equal(r.challenge, 'nap');

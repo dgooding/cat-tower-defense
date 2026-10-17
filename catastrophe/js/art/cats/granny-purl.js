@@ -551,7 +551,7 @@ export const spec = {
       { layer: 'neck', draw: knitting(0, [ROSE, MINT, LILAC], true) },
       { layer: 'neck', draw: tangleFront },
       ...face,
-      { layer: 'head', draw: yarnBun },
+      { layer: 'head', hat: true, draw: yarnBun },
     ],
   },
   actions: {

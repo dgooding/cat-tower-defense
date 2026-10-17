@@ -531,7 +531,7 @@ export const spec = {
       { layer: 'body', draw: pocketSpoon },
       { layer: 'neck', draw: raisedArm(lance) },
       { layer: 'neck', draw: capeClasp },
-      { layer: 'head', draw: capHelmet },
+      { layer: 'head', hat: true, draw: capHelmet },
     ],
   },
   actions: {

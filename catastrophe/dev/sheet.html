@@ -16,7 +16,8 @@
     <canvas id="c"></canvas>
     <script type="module">
       // Usage:
-      //   sheet.html?kind=cat&ids=pudding,sriracha&view=expr     (cats/kittens: view=expr|tiers)
+      //   sheet.html?kind=cat&ids=pudding,sriracha&view=expr     (cats/kittens/heroes: view=expr|tiers)
+      //   sheet.html?kind=cat&view=tiers&hat=top-hat             (everyone wearing a Wardrobe hat)
       //   sheet.html?kind=enemy&ids=vroomba,monday               (walk / idle / hit / defeat)
       //   sheet.html?kind=boss&ids=bathzilla                     (adds one cell per phase)
       //   sheet.html?kind=room&ids=countryside                   (all 3 layouts)
@@ -31,18 +32,20 @@
       const q = new URLSearchParams(location.search);
       const kind = q.get('kind') ?? 'cat';
       const view = q.get('view') ?? 'expr';
-      const table = { cat: R.CAT_ART, kitten: R.KITTEN_ART, enemy: R.ENEMY_ART, boss: R.BOSS_ART, room: R.ROOM_ART }[kind];
+      const table = { cat: R.CAT_ART, kitten: R.KITTEN_ART, hero: R.HERO_ART, enemy: R.ENEMY_ART, boss: R.BOSS_ART, room: R.ROOM_ART }[kind];
       const ids = (q.get('ids') ?? Object.keys(table).join(',')).split(',').filter((id) => table[id]);
+      const hat = R.HATS[q.get('hat') ?? ''];
 
       const cells = [];
       let seed = 3;
       for (const id of ids) {
-        if (kind === 'cat' || kind === 'kitten') {
+        if (kind === 'cat' || kind === 'kitten' || kind === 'hero') {
           const art = table[id];
           const list = view === 'tiers' ? art.tiers.map((t) => ({ label: `${id} ${t.label}`, expr: 'idle', tier: t.id })) : EXPRESSIONS.map((e) => ({ label: `${id} · ${e}`, expr: e, tier: 'T1' }));
           for (const it of list) {
             const rig = new CatRig(art.spec, seed++);
             rig.tier = it.tier;
+            if (hat) rig.extra = [{ layer: 'head', hat: true, draw: hat.draw }];
             rig.setExpression(it.expr);
             const k = art.spec.scale ?? 1;
             cells.push({ label: it.label, w: 240, h: 250, update: (dt) => rig.update(dt, { x: 0.4, y: 0.1 }), draw: (ctx) => { ctx.translate(130, 228); const s = 0.7 * k; ctx.scale(s, s); rig.draw(ctx, s); } });

@@ -1320,6 +1320,7 @@ export const room = {
   name: 'Moonlit Sky Islands',
   pathStyle: { fill: '#AFCB8E', edge: '#5D8656', speck: 'rgba(255,248,214,0.35)', width: 92 },
   cushion: { base: '#F2B8CF', dark: '#C987A6' },
+  seat: 'cloud',
   drawBack(ctx, pen, t, o) {
     const L = o.layout ?? L41;
     const sc = getScene(L);

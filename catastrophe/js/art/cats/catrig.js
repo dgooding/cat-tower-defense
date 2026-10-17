@@ -17,8 +17,10 @@ import { mulberry32, clamp, hash2 } from '../../core/rng.js';
  * @property {Pen} pen @property {CanvasRenderingContext2D} ctx @property {CatSpec} S
  * @property {number} hy head center y @property {number} brx body radius x @property {number} bry body radius y
  * @property {number} hrx head radius x @property {number} lw ink width @property {number} t time
+ * @property {CatRig} [rig] the rig being drawn (for accessories that react to ears, blinks or expression)
  */
-/** @typedef {{layer:'side'|'body'|'neck'|'head', draw:(g:Geo)=>void}} Accessory */
+/** `hat: true` marks headwear on the crown; built-in hats are hidden while a Wardrobe hat (also `hat: true`) is worn. */
+/** @typedef {{layer:'side'|'body'|'neck'|'head', hat?:boolean, draw:(g:Geo)=>void}} Accessory */
 /**
  * @typedef {Object} ActionDef
  * @property {number} duration
@@ -240,7 +242,7 @@ export class CatRig {
     const wag = E.wag ?? 1;
 
     /** @type {Geo} */
-    const g = { pen, ctx, S, hy: 0, brx: 60 * bodyW, bry: 54 * bodyH, hrx: 76 * headW, lw, t };
+    const g = { pen, ctx, S, hy: 0, brx: 60 * bodyW, bry: 54 * bodyH, hrx: 76 * headW, lw, t, rig: this };
 
     // Ground: puddle (wet) and contact shadow.
     if (this.expr === 'wet') {
@@ -259,7 +261,9 @@ export class CatRig {
     ctx.rotate(sway);
     ctx.scale(1 + sq, 1 - sq);
 
-    const accs = [...(S.tiers?.[this.tier] ?? []), ...this.extra];
+    const tierAccs = S.tiers?.[this.tier] ?? [];
+    const wardrobeHat = this.extra.some((a) => a.hat);
+    const accs = [...(wardrobeHat ? tierAccs.filter((a) => !a.hat) : tierAccs), ...this.extra];
     const layer = (/** @type {Accessory['layer']} */ name) => {
       for (const a of accs) if (a.layer === name) a.draw(g);
     };

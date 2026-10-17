@@ -4,7 +4,7 @@ import { CAT_ART, KITTEN_ART, ENEMY_ART, BOSS_ART, HERO_ART, HATS } from '../art
 import { CatRig } from '../art/cats/catrig.js';
 import { EnemyRig } from '../art/enemies/enemyrig.js';
 import { Pen } from '../art/brush.js';
-import { drawRoom, drawStash, STAGE_W, STAGE_H } from '../art/rooms/common.js';
+import { drawRoom, drawStash, drawSeat, STAGE_W, STAGE_H } from '../art/rooms/common.js';
 import { TIER_LABELS } from '../data/cats.js';
 import { quip } from '../data/quips.js';
 import { Fx, drawText } from './fx.js';
@@ -64,10 +64,18 @@ export class Renderer {
     this.list = [];
     this.listN = 0;
     this.frame = 0;
+    /** Selected / hovered cat slot (-1 = none). */
     this.selectedSpot = -1;
     this.hoverSpot = -1;
     /** @type {{spot:number, range:number}|null} */
     this.preview = null;
+    /**
+     * Placement ghost while seating or moving a cat: why = '' when the spot is fine.
+     * @type {{cat:string, x:number, y:number, why:string, label:string, range:number, slot:number}|null}
+     */
+    this.ghost = null;
+    /** @type {{cat:string, rig:CatRig, scale:number, pokeT:number, sprite?:any}|null} */
+    this.ghostView = null;
     /** @type {{x:number, y:number, r:number}|null} */
     this.aim = null;
     this.highlightEmpty = false;
@@ -114,7 +122,7 @@ export class Renderer {
   /** Wardrobe hat accessory for a cat/hero id, if one is equipped. @param {string} id */
   hatFor(id) {
     const hat = HATS?.[this.hats[id]];
-    return hat ? [{ layer: 'head', draw: hat.draw }] : [];
+    return hat ? [{ layer: 'head', hat: true, draw: hat.draw }] : [];
   }
 
   /**
@@ -137,6 +145,9 @@ export class Renderer {
     this.selectedSpot = -1;
     this.hoverSpot = -1;
     this.preview = null;
+    this.ghost = null;
+    this.release(this.ghostView);
+    this.ghostView = null;
     this.aim = null;
     this.roomCost = 0;
     this.roomSamples = 0;
@@ -267,16 +278,25 @@ export class Renderer {
         fx.text('BOOM.', ev.x, ev.y - 110, '#3B3A4A', 34, 0.9);
         break;
       case 'place': {
-        const p = this.layout?.spots[ev.spot];
-        if (p) {
-          fx.burst(p.x, p.y - 10, 12, ['#FFFDF6', '#F4A6B7', '#FFE58A'], 180);
+        if (ev.x !== undefined) {
+          fx.burst(ev.x, ev.y - 10, 12, ['#FFFDF6', '#F4A6B7', '#FFE58A'], 180);
           // One speech quip on screen at a time so bubbles never pile up.
           const now = performance.now();
           if (now >= (this.quipUntil ?? 0)) {
             this.quipUntil = now + 2400;
-            fx.text(quip(ev.cat, sim.stats.built + ev.spot), p.x, p.y - 110, '#3B3A4A', 20, 2.2);
+            fx.text(quip(ev.cat, sim.stats.built + ev.spot), ev.x, ev.y - 110, '#3B3A4A', 20, 2.2);
           }
         }
+        break;
+      }
+      case 'move': {
+        const v = this.viewOfTower(ev.tid);
+        if (v) {
+          v.jumpT = 0.4;
+          v.rig.poke();
+        }
+        fx.burst(ev.fromX, ev.fromY - 10, 8, ['#FFFDF6', '#E9E4D8'], 120);
+        fx.burst(ev.x, ev.y - 10, 10, ['#FFFDF6', '#F4A6B7', '#FFE58A'], 160);
         break;
       }
       case 'upgrade': {
@@ -290,10 +310,9 @@ export class Renderer {
         break;
       }
       case 'sell': {
-        const p = this.layout?.spots[ev.spot];
-        if (p) {
-          fx.text('+' + ev.refund + ' 🐟  *sigh*', p.x, p.y - 90, '#C98A1B', 22, 1.4);
-          fx.burst(p.x, p.y - 20, 10, ['#FFFDF6', '#E9E4D8'], 140);
+        if (ev.x !== undefined) {
+          fx.text('+' + ev.refund + ' 🐟  *sigh*', ev.x, ev.y - 90, '#C98A1B', 22, 1.4);
+          fx.burst(ev.x, ev.y - 20, 10, ['#FFFDF6', '#E9E4D8'], 140);
         }
         break;
       }
@@ -402,10 +421,9 @@ export class Renderer {
         this.screensWarn = ev.next;
         break;
       case 'sock': {
-        const p = this.layout?.spots[ev.spot];
-        if (p) {
-          fx.text('🧦 plop!', p.x, p.y - 90, '#3B3A4A', 26, 1.4);
-          fx.burst(p.x, p.y - 20, 8, ['#F4A6B7', '#FFFDF6'], 120);
+        if (ev.x !== undefined) {
+          fx.text('🧦 plop!', ev.x, ev.y - 90, '#3B3A4A', 26, 1.4);
+          fx.burst(ev.x, ev.y - 20, 8, ['#F4A6B7', '#FFFDF6'], 120);
         }
         break;
       }
@@ -699,7 +717,7 @@ export class Renderer {
     const layout = /** @type {import('../art/rooms/common.js').Layout} */ (this.layout);
     const sim = /** @type {Sim} */ (this.sim);
     const light = sim.totalWaves === Infinity ? (sim.waveIdx % 10) / 10 : Math.min(1, sim.waveIdx / Math.max(1, sim.totalWaves));
-    const o = { reducedMotion: this.reduced, light, layout, showStash: false, lw: 3 };
+    const o = { reducedMotion: this.reduced, light, layout, showStash: false, showSpots: false, lw: 3 };
     const prevCtx = this.pen.ctx;
     this.pen.ctx = ctx; // drawRoom/drawNapSpot draw through the pen's own context
     try {
@@ -815,6 +833,7 @@ export class Renderer {
     this.drawBeams(ctx);
     this.drawProjectiles(ctx);
     this.drawBars(ctx);
+    this.drawGhost(ctx);
     this.fx.draw(ctx, this.time);
 
     if (this.cacheMode) {
@@ -929,7 +948,6 @@ export class Renderer {
   /** Gimmick + hero markers on the ground layer (under characters). @param {CanvasRenderingContext2D} ctx */
   drawGround(ctx) {
     const sim = /** @type {Sim} */ (this.sim);
-    const spots = /** @type {import('../art/rooms/common.js').Layout} */ (this.layout).spots;
     /** @param {{x:number,y:number}[]} pts */
     const firstOnStage = (pts) => pts.find((p) => p.x > 90 && p.x < 1830 && p.y > 140 && p.y < 980) ?? pts[0];
     // 2-1: the closed route is washed out; the one opening next wave blinks.
@@ -955,20 +973,9 @@ export class Renderer {
       const q = firstOnStage(open.pts);
       drawText(ctx, '➜ open', q.x + 70, q.y - 56, 26, '#5E9A4E');
     }
-    // Nap Time challenge: only the first 4 cushions can be used.
-    spots.forEach((p, i) => {
-      if (!sim.spotLocked[i]) return;
-      ctx.save();
-      ctx.globalAlpha = 0.55;
-      ctx.fillStyle = '#6B6A7C';
-      ctx.beginPath();
-      ctx.ellipse(p.x, p.y - 4, 86, 28, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-      drawText(ctx, '🔒 nap time', p.x, p.y - 6, 22, '#FFFDF6');
-    });
-    // 2-3: a sock on an empty cushion.
-    if (sim.sockSpot >= 0 && spots[sim.sockSpot] && !sim.towers[sim.sockSpot]) this.drawSock(ctx, spots[sim.sockSpot].x, spots[sim.sockSpot].y - 14, 1.3);
+    // 2-3: the sock lying on the ground (cats under it wear it instead, see drawCat).
+    const sock = sim.sockAt();
+    if (sock && !sim.catNear(sock.x, sock.y)) this.drawSock(ctx, sock.x, sock.y - 14, 1.3);
     // Box Fort.
     for (const b of sim.blockers) {
       ctx.save();
@@ -1126,56 +1133,118 @@ export class Renderer {
     }
   }
 
-  /** Selection glow, range rings, empty-spot hints. @param {CanvasRenderingContext2D} ctx */
+  /** Cushions under seated cats, selection glow, range rings. @param {CanvasRenderingContext2D} ctx */
   drawSpotMarks(ctx) {
     const sim = /** @type {Sim} */ (this.sim);
-    const spots = /** @type {import('../art/rooms/common.js').Layout} */ (this.layout).spots;
+    const moving = this.ghost && this.ghost.slot >= 0 ? this.ghost.slot : -1;
     ctx.save();
-    if (this.highlightEmpty) {
-      const a = 0.35 + 0.25 * Math.sin(this.time * 4);
-      ctx.strokeStyle = `rgba(255,253,246,${a})`;
-      ctx.lineWidth = 5;
-      ctx.setLineDash([12, 10]);
-      spots.forEach((p, i) => {
-        if (sim.towers[i] || !sim.spotUsable(i)) return;
-        ctx.beginPath();
-        ctx.ellipse(p.x, p.y, 84, 30, 0, 0, Math.PI * 2);
-        ctx.stroke();
-      });
-      ctx.setLineDash([]);
-    }
     for (const [i, alpha] of /** @type {[number, number][]} */ ([
       [this.hoverSpot, 0.35],
       [this.selectedSpot, 0.7],
     ])) {
-      if (i < 0 || !spots[i]) continue;
-      const p = spots[i];
+      const t = i >= 0 ? sim.towers[i] : null;
+      if (!t || i === moving) continue;
       ctx.fillStyle = `rgba(255,246,184,${alpha})`;
       ctx.beginPath();
-      ctx.ellipse(p.x, p.y, 92, 34, 0, 0, Math.PI * 2);
+      ctx.ellipse(t.x, t.y, 82, 30, 0, 0, Math.PI * 2);
       ctx.fill();
     }
-    const ring = this.preview ?? (this.selectedSpot >= 0 && sim.towers[this.selectedSpot] ? { spot: this.selectedSpot, range: sim.rangeOf(/** @type {Tower} */ (sim.towers[this.selectedSpot])) } : null);
-    if (ring && spots[ring.spot]) {
-      const p = spots[ring.spot];
-      ctx.fillStyle = 'rgba(191,227,242,0.16)';
-      ctx.strokeStyle = 'rgba(59,58,74,0.55)';
-      ctx.lineWidth = 3;
-      ctx.setLineDash([12, 9]);
+    ctx.restore();
+    const prevCtx = this.pen.ctx;
+    this.pen.ctx = ctx;
+    try {
+      for (const t of sim.towers) if (t) drawSeat(this.pen, t.x, t.y, 3, this.room);
+    } finally {
+      this.pen.ctx = prevCtx;
+    }
+    const sel = this.selectedSpot >= 0 && this.selectedSpot !== moving ? sim.towers[this.selectedSpot] : null;
+    if (sel) this.rangeRing(ctx, sel.x, sel.y, sim.rangeOf(sel), 'rgba(191,227,242,0.16)', 'rgba(59,58,74,0.55)', sel);
+  }
+
+  /**
+   * @param {CanvasRenderingContext2D} ctx @param {number} x @param {number} y @param {number} r
+   * @param {string} fill @param {string} stroke @param {Tower|null} [t] shows a barracks rally point
+   */
+  rangeRing(ctx, x, y, r, fill, stroke, t) {
+    ctx.save();
+    ctx.fillStyle = fill;
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = 3;
+    ctx.setLineDash([12, 9]);
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    if (t && t.rally) {
+      ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(224,125,149,0.6)';
       ctx.beginPath();
-      ctx.arc(p.x, p.y, ring.range, 0, Math.PI * 2);
+      ctx.ellipse(t.rally.x, t.rally.y, 18, 9, 0, 0, Math.PI * 2);
       ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  /** The cat being seated or moved, following the pointer: green ring = OK, red = not here (with the reason). @param {CanvasRenderingContext2D} ctx */
+  drawGhost(ctx) {
+    const g = this.ghost;
+    const sim = this.sim;
+    if (!g || !sim) {
+      if (this.ghostView) {
+        this.release(this.ghostView);
+        this.ghostView = null;
+      }
+      return;
+    }
+    const ok = !g.why;
+    const from = g.slot >= 0 ? sim.towers[g.slot] : null;
+    if (from) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(59,58,74,0.45)';
+      ctx.lineWidth = 4;
+      ctx.setLineDash([10, 10]);
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y - 30);
+      ctx.lineTo(g.x, g.y - 30);
       ctx.stroke();
-      const t = sim.towers[ring.spot];
-      if (t && t.rally) {
-        ctx.setLineDash([]);
-        ctx.fillStyle = 'rgba(224,125,149,0.6)';
-        ctx.beginPath();
-        ctx.ellipse(t.rally.x, t.rally.y, 18, 9, 0, 0, Math.PI * 2);
-        ctx.fill();
+      ctx.restore();
+    }
+    this.rangeRing(ctx, g.x, g.y, g.range, ok ? 'rgba(124,191,122,0.18)' : 'rgba(210,72,60,0.16)', ok ? 'rgba(62,130,70,0.8)' : 'rgba(210,72,60,0.85)');
+    ctx.save();
+    ctx.globalAlpha = ok ? 0.85 : 0.5;
+    const prevCtx = this.pen.ctx;
+    this.pen.ctx = ctx;
+    try {
+      drawSeat(this.pen, g.x, g.y, 3, this.room);
+    } finally {
+      this.pen.ctx = prevCtx;
+    }
+    let gv = this.ghostView;
+    const art = CAT_ART[g.cat];
+    if (art && (!gv || gv.cat !== g.cat)) {
+      this.release(gv);
+      const rig = new CatRig(art.spec, 7);
+      rig.extra = this.hatFor(g.cat);
+      if (from) rig.tier = TIER_LABELS[from.tier];
+      gv = this.ghostView = { cat: g.cat, rig, scale: (CAT_PX / 250) * (art.spec.scale ?? 1), pokeT: -9 };
+    }
+    if (gv) {
+      if (from) gv.rig.tier = TIER_LABELS[from.tier];
+      gv.rig.setExpression(ok ? 'happy' : 'startled');
+      gv.rig.update(1 / 60, null);
+      const ss = Math.max(0.5, gv.rig.spec.scale ?? 1);
+      const view = gv;
+      try {
+        this.blitRig(ctx, gv, g.x, g.y - 6, 320 * ss, 185 * ss, 160 * ss, 160 * ss, gv.rig.time, ok ? 'ok' : 'no', (c) => {
+          c.scale(view.scale, view.scale);
+          view.rig.draw(c, view.scale * this.k, { reducedMotion: this.reduced });
+        });
+      } catch (err) {
+        this.artFail('ghost:' + g.cat, err);
       }
     }
     ctx.restore();
+    if (g.label) drawText(ctx, g.label, g.x, g.y - 128, 24, ok ? '#3E8246' : '#D2483C');
   }
 
   /**
@@ -1229,6 +1298,11 @@ export class Renderer {
     const t = v.t;
     const jump = v.jumpT > 0 ? -Math.sin((v.jumpT / 0.4) * Math.PI) * 46 : 0;
     const ss = Math.max(0.5, v.rig.spec.scale ?? 1);
+    const beingMoved = this.ghost?.slot === t.spot;
+    if (beingMoved) {
+      ctx.save();
+      ctx.globalAlpha = 0.4;
+    }
     try {
       this.blitRig(ctx, v, t.x, t.y - 6 + jump, 320 * ss, 185 * ss, 160 * ss, 160 * ss, v.rig.time, v.tierLabel, (c) => {
         c.scale(v.scale, v.scale);
@@ -1238,17 +1312,19 @@ export class Renderer {
       this.artFail('cat:' + t.cat, err);
       this.release(v);
       this.cats.delete(t.id); // rebuild a fresh rig next frame
+    } finally {
+      if (beingMoved) ctx.restore();
     }
     if (t.boxT > 0) drawText(ctx, '📦', t.x + 40, t.y - 80, 22);
     const sim = this.sim;
-    if (sim && t.spot === sim.sockSpot) this.drawSock(ctx, t.x + 4, t.y - 74, 0.9);
+    if (sim && sim.underSock(t)) this.drawSock(ctx, t.x + 4, t.y - 74, 0.9);
     if (this.colorblind) {
       // Shapes/icons for status, not just tints.
       let icons = '';
       if (t.wetT > 0) icons += '💧';
       if (t.stunT > 0) icons += '❗';
       if (t.sad) icons += '☁';
-      if (sim && t.spot === sim.sockSpot) icons += '🧦';
+      if (sim && sim.underSock(t)) icons += '🧦';
       if (icons) drawText(ctx, icons, t.x - 40, t.y - 82, 22, '#3B3A4A');
     }
   }

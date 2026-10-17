@@ -62,9 +62,8 @@ function cueOf(rig, key, t) {
 }
 
 // ---------------------------------------------------------------------------
-// Per-rig state, keyed by the rig's Pen. Actions write the arm pose; once Tom has
-// acted, the face accessory also reads his ears/eyes so the notch and the heavy
-// lids follow along.
+// Per-rig state, keyed by the rig's Pen. Actions write the arm pose; the face accessory
+// reads his ears/eyes (via g.rig) so the notch and the heavy lids follow along.
 
 /** @typedef {{x:number, y:number, item?:'sign'|'sushi'|null, flip?:number, sign?:number, beans?:boolean}} Pose */
 /** @type {WeakMap<object, Pose & {at:number}>} */
@@ -226,7 +225,7 @@ function arms(g) {
 /** Half-lidded eyes, bags, grizzled muzzle, toothpick and the notched ear. @param {Geo} g */
 function face(g) {
   const { pen, ctx, S, hy, lw, t } = g;
-  const rig = RIGS.get(g.pen);
+  const rig = g.rig ?? RIGS.get(g.pen);
   // Notched left ear (follows the ear's own rotation once we know the rig).
   {
     const es = S.earSize ?? 1;

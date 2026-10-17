@@ -14,6 +14,22 @@ export const SELL_REFUND = 0.7;
 export const FIRST_WAVE_DELAY = 15;
 export const WAVE_GAP = 20;
 export const REVEAL_R = 200; // cats notice stealthy enemies this close (then get startled)
+/**
+ * Free placement rules (stage px). A cat's footprint is an ellipse (rx × ry) around its cushion;
+ * footprints may not overlap, and the cushion stays clear of every enemy path and the Snack Stash.
+ */
+export const PLACE = { pathClear: 86, stashClear: 150, rx: 58, ry: 34, minX: 60, maxX: 1860, minY: 150, maxY: 1035, sockR: 80, napMax: 4 };
+/** Why a spot can't take a cat (empty string = fine). */
+export const PLACE_WHY = {
+  bounds: 'Too close to the edge',
+  path: 'Not on the path!',
+  stash: 'Too close to the Snack Stash',
+  cat: 'Too close to another cat',
+  sock: 'A sock is lying there',
+  limit: 'Nap Time: only 4 cats allowed',
+  wave: 'Cats can only move between waves',
+  over: 'The level is over',
+};
 
 /** @typedef {import('../data/cats.js').TierStats} TierStats */
 /** @typedef {import('../data/enemies.js').EnemyDef} EnemyDef */
@@ -58,7 +74,7 @@ export const POWERS = {
  */
 /**
  * @typedef {Object} Tower
- * @property {number} id @property {number} spot @property {number} x @property {number} y
+ * @property {number} id @property {number} spot slot index in sim.towers @property {number} x @property {number} y
  * @property {string} cat @property {import('../data/cats.js').CatDef} def @property {number} tier
  * @property {TierStats} s @property {number} spent @property {TargetMode} mode
  * @property {number} cd @property {number} skillT @property {number} target last target id
@@ -128,8 +144,8 @@ export class Sim {
     /** @type {{t:number, id:string, path:number|'a', hpMul:number}[]} */
     this.spawns = [];
     this.spawnCounter = 0;
-    /** @type {(Tower|null)[]} */
-    this.towers = o.layout.spots.map(() => null);
+    /** Placed cats, by slot (null = sold). Free placement: any spot that passes canPlace(). @type {(Tower|null)[]} */
+    this.towers = [];
     /** @type {Enemy[]} */
     this.enemies = [];
     /** @type {Map<number, Enemy>} */
@@ -155,11 +171,9 @@ export class Sim {
     this.endlessCache = new Map();
     this.stats = { kills: 0, leaks: 0, earned: 0, befriended: 0, built: 0, stolen: 0 };
     this.boundary = true;
-    // Challenges (Interactive Mode): Iron Cat = 1 snack, no powers; Nap Time = only the first 4 cushions.
+    // Challenges (Interactive Mode): Iron Cat = 1 snack, no powers; Nap Time = at most 4 cats.
     if (this.challenge === 'iron') this.lives = this.maxLives = 1;
-    /** @type {boolean[]} */
-    this.spotLocked = o.layout.spots.map((_, i) => this.challenge === 'nap' && i >= 4);
-    // Gimmicks / moods.
+    // Gimmicks / moods. 2-3's sock lands on one of the layout's landing points (layout.spots).
     this.activePath = 0;
     this.sockSpot = -1;
     /** @type {string|null} */
@@ -191,9 +205,55 @@ export class Sim {
     this.emit({ type: 'unplug', eid: e.id, x: e.plugX, y: e.plugY, by });
   }
 
-  /** Can a cat be seated on this cushion right now? @param {number} spot */
+  /** Where 2-3's sock is lying this wave, or null. */
+  sockAt() {
+    return this.sockSpot >= 0 ? this.layout.spots[this.sockSpot] ?? null : null;
+  }
+
+  /** Is this cat napping under the sock? @param {{x:number, y:number}} t */
+  underSock(t) {
+    const s = this.sockAt();
+    return !!s && (t.x - s.x) ** 2 + (t.y - s.y) ** 2 < PLACE.sockR ** 2;
+  }
+
+  /** Is any seated cat within the sock radius of (x, y)? @param {number} x @param {number} y */
+  catNear(x, y) {
+    return this.towers.some((t) => !!t && (t.x - x) ** 2 + (t.y - y) ** 2 < PLACE.sockR ** 2);
+  }
+
+  /** Is the field clear between waves (cats may be moved)? */
+  get betweenWaves() {
+    return (this.phase === 'prep' || this.phase === 'wave') && this.boundary;
+  }
+
+  /**
+   * Can a cat sit at (x, y)? Returns '' if yes, else a PLACE_WHY key.
+   * @param {number} x @param {number} y @param {number} [ignore] slot to ignore (the cat being moved)
+   * @returns {'' | keyof typeof PLACE_WHY}
+   */
+  canPlace(x, y, ignore = -1) {
+    if (this.phase === 'won' || this.phase === 'lost') return 'over';
+    if (x < PLACE.minX || x > PLACE.maxX || y < PLACE.minY || y > PLACE.maxY) return 'bounds';
+    const pc2 = PLACE.pathClear ** 2;
+    for (const tr of this.tracks) for (const q of tr.pts) if ((q.x - x) ** 2 + (q.y - y) ** 2 < pc2) return 'path';
+    const st = this.layout.stash;
+    if ((st.x - x) ** 2 + (st.y - y) ** 2 < PLACE.stashClear ** 2) return 'stash';
+    let n = 0;
+    for (let i = 0; i < this.towers.length; i++) {
+      const t = this.towers[i];
+      if (!t || i === ignore) continue;
+      n++;
+      if (((t.x - x) / (2 * PLACE.rx)) ** 2 + ((t.y - y) / (2 * PLACE.ry)) ** 2 < 1) return 'cat';
+    }
+    if (this.underSock({ x, y })) return 'sock';
+    if (this.challenge === 'nap' && n >= PLACE.napMax && !(ignore >= 0 && this.towers[ignore])) return 'limit';
+    return '';
+  }
+
+  /** Legacy: is the layout's suggested spot free to build on? @param {number} spot */
   spotUsable(spot) {
-    return spot >= 0 && spot < this.towers.length && !this.spotLocked[spot] && this.sockSpot !== spot;
+    const p = this.layout.spots[spot];
+    return !!p && this.canPlace(p.x, p.y, spot) === '';
   }
 
   // ───────────────────────── helpers ─────────────────────────
@@ -290,23 +350,40 @@ export class Sim {
     }
   }
 
-  /** @param {number} spot @param {string} catId @returns {boolean} */
+  /**
+   * Seat a cat at a layout's suggested spot, in the slot with the same index (bots, tests, the title diorama).
+   * @param {number} spot @param {string} catId @returns {boolean}
+   */
   build(spot, catId) {
-    if (this.phase === 'won' || this.phase === 'lost') return false;
-    if (spot < 0 || spot >= this.towers.length || this.towers[spot] || !this.spotUsable(spot)) return false;
-    if (!this.level.cats.includes(/** @type {any} */ (catId))) return false;
-    const def = CAT_BY_ID[catId];
-    if (!def) return false;
-    const cost = def.tiers[0].cost;
-    if (this.treats < cost) return false;
-    this.treats -= cost;
     const p = this.layout.spots[spot];
+    if (!p || this.towers[spot]) return false;
+    return this.place(catId, p.x, p.y, spot) >= 0;
+  }
+
+  /**
+   * Seat a cat anywhere that passes canPlace(). Returns the slot index, or -1.
+   * @param {string} catId @param {number} x @param {number} y @param {number} [slot] preferred (empty) slot
+   */
+  place(catId, x, y, slot) {
+    if (this.canPlace(x, y) !== '') return -1;
+    if (!this.level.cats.includes(/** @type {any} */ (catId))) return -1;
+    const def = CAT_BY_ID[catId];
+    if (!def) return -1;
+    const cost = def.tiers[0].cost;
+    if (this.treats < cost) return -1;
+    let spot = slot ?? this.towers.indexOf(null);
+    if (spot < 0) spot = this.towers.length;
+    if (this.towers[spot]) return -1;
+    while (this.towers.length < spot) this.towers.push(null);
+    this.treats -= cost;
+    x = Math.round(x);
+    y = Math.round(y);
     /** @type {Tower} */
     const t = {
       id: this.nextId++,
       spot,
-      x: p.x,
-      y: p.y,
+      x,
+      y,
       cat: catId,
       def,
       tier: 0,
@@ -333,8 +410,30 @@ export class Sim {
     this.setupTower(t);
     this.stats.built++;
     if (this.phase === 'prep' && this.autoStartIn === null) this.autoStartIn = FIRST_WAVE_DELAY;
-    this.emit({ type: 'place', tid: t.id, spot, cat: catId });
-    return true;
+    this.emit({ type: 'place', tid: t.id, spot, cat: catId, x, y });
+    return spot;
+  }
+
+  /**
+   * Move a seated cat to a new spot (free, between waves only). Returns '' on success, else a PLACE_WHY key.
+   * @param {number} spot @param {number} x @param {number} y @returns {'' | keyof typeof PLACE_WHY}
+   */
+  move(spot, x, y) {
+    const t = this.towers[spot];
+    if (!t) return 'over';
+    if (!this.betweenWaves) return this.phase === 'won' || this.phase === 'lost' ? 'over' : 'wave';
+    const why = this.canPlace(x, y, spot);
+    if (why) return why;
+    const from = { x: t.x, y: t.y };
+    t.x = Math.round(x);
+    t.y = Math.round(y);
+    // Kittens and webs re-anchor to the nearest path from the new spot.
+    this.removeKittens(t);
+    t.rally = null;
+    this.zones = this.zones.filter((z) => z.tid !== t.id || z.kind !== 'web');
+    this.setupTower(t);
+    this.emit({ type: 'move', tid: t.id, spot, x: t.x, y: t.y, fromX: from.x, fromY: from.y });
+    return '';
   }
 
   /** Cost of the next tier for a tower (branch: 3=4A, 4=4B). @param {number} spot @param {number} [branch] */
@@ -378,7 +477,7 @@ export class Sim {
     this.removeKittens(t);
     this.zones = this.zones.filter((z) => z.tid !== t.id);
     this.towers[spot] = null;
-    this.emit({ type: 'sell', tid: t.id, spot, refund, cat: t.cat });
+    this.emit({ type: 'sell', tid: t.id, spot, refund, cat: t.cat, x: t.x, y: t.y });
     return refund;
   }
 
@@ -1283,7 +1382,7 @@ export class Sim {
       let rateMul = t.sad ? 0.7 : 1;
       if (this.dark > 0) rateMul *= 0.8 / 0.7;
       if (t.boxT > 0) rateMul *= 1.25;
-      if (t.spot === this.sockSpot) rateMul *= 0.5; // a sock landed on its head
+      if (this.underSock(t)) rateMul *= 0.5; // a sock landed on its head
       rateMul *= moodOf(this)?.catRate ?? 1;
       const s = t.s;
       const range = this.rangeOf(t);
@@ -1660,10 +1759,11 @@ export class Sim {
     sim.stats = { ...data.stats };
     sim.spawns = data.spawns.map((s) => ({ ...s }));
     data.towers.forEach((td, spot) => {
-      if (!td || spot >= sim.towers.length) return;
+      if (!td) return;
       const def = CAT_BY_ID[td.cat];
       if (!def) return;
-      sim.towers[spot] = /** @type {Tower} */ ({ ...td, def, s: def.tiers[td.tier] });
+      while (sim.towers.length < spot) sim.towers.push(null);
+      sim.towers[spot] = /** @type {Tower} */ ({ ...td, spot, def, s: def.tiers[td.tier] });
     });
     for (const ed of data.enemies) {
       const def = ENEMY_BY_ID[ed.type];

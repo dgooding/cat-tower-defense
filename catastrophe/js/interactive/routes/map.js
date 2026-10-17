@@ -158,6 +158,35 @@ export function render() {
     h('span', { class: 'rod right', 'aria-hidden': 'true' }),
   ]);
 
+  // Compact level list, shown instead of the node name tags on narrow (phone) screens.
+  const listItem = (/** @type {typeof LEVELS[number]} */ lvl, /** @type {number} */ i) => {
+    const open = isUnlocked(i, p);
+    const stars = p.stars[lvl.id] ?? 0;
+    const ch = p.challenges[lvl.id] ?? {};
+    const boss = lvl.boss ? ENEMY_BY_ID[lvl.boss] : null;
+    const body = [
+      h('span', { class: 'ml-id', text: open ? (boss ? `${lvl.id} ${boss.icon}` : lvl.id) : '🔒' }),
+      h('span', { class: 'ml-name', text: lvl.name }),
+      open
+        ? h('span', { class: 'node-meta' }, [starRow(stars), h('span', { class: `chal${ch.iron ? ' on' : ''}`, text: '🛡' }), h('span', { class: `chal${ch.nap ? ' on' : ''}`, text: '💤' })])
+        : h('span', { class: 'node-lock', text: `Beat ${LEVELS[i - 1]?.id} first` }),
+    ];
+    const cls = `ml-item${open ? '' : ' locked'}${i === here ? ' here' : ''}`;
+    return h('li', {}, [open ? h('a', { class: cls, href: `#/briefing/${lvl.id}` }, body) : h('span', { class: cls, 'aria-disabled': 'true' }, body)]);
+  };
+  const eBody = [h('span', { class: 'ml-id', text: eOpen ? '🧺' : '🔒' }), h('span', { class: 'ml-name', text: '∞ Infinite Laundry Basket' }), h('span', { class: eOpen ? 'node-meta' : 'node-lock', text: eOpen ? `Best: ${p.endlessBest} waves` : 'Beat 1-1 first' })];
+  const list = h('nav', { class: 'map-list', 'aria-label': 'Levels' }, [
+    ...WORLD_ORDER.map((w) =>
+      h('section', { class: `ml-world w-${w}` }, [
+        h('h2', { text: `${WORLD_INFO[w].icon} ${WORLD_NAMES[w]}` }),
+        h('ol', {}, LEVELS.flatMap((lvl, i) => (lvl.world === w ? [listItem(lvl, i)] : []))),
+      ]),
+    ),
+    h('section', { class: 'ml-world' }, [
+      h('ol', {}, [h('li', {}, [eOpen ? h('a', { class: 'ml-item', href: '#/hero/endless' }, eBody) : h('span', { class: 'ml-item locked', 'aria-disabled': 'true' }, eBody)])]),
+    ]),
+  ]);
+
   const tip = TIPS[Math.floor(Math.random() * TIPS.length)];
   const el = h('section', { class: 'page map-page' }, [
     h('div', { class: 'map-head' }, [
@@ -169,6 +198,7 @@ export function render() {
       ]),
     ]),
     h('div', { class: 'map-wrap' }, [scroll]),
+    list,
     h('div', { class: 'map-foot' }, [
       h('article', { class: 'sticky-note' }, [tape('pink'), h('p', { text: tip })]),
       h('nav', { class: 'map-links', 'aria-label': 'More' }, [

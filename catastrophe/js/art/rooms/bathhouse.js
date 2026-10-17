@@ -1472,6 +1472,7 @@ export const room = {
   name: 'Rainy Bathhouse Town',
   pathStyle: { fill: '#8A9DA1', edge: '#4E6369', speck: 'rgba(233,241,242,0.22)', width: 92 },
   cushion: { base: '#E9A0A8', dark: '#B8687A' },
+  seat: 'deck',
   drawBack(ctx, pen, t, o) {
     const L = o.layout ?? L31;
     const sc = getScene(L);

@@ -32,7 +32,7 @@ export function conceptOf(id) {
 /** Accessories for a worn hat. @param {string|null|undefined} hatId */
 export function hatExtra(hatId) {
   const hat = hatId ? HATS[hatId] : null;
-  return hat ? [{ layer: /** @type {'head'} */ ('head'), draw: hat.draw }] : [];
+  return hat ? [{ layer: /** @type {'head'} */ ('head'), hat: true, draw: hat.draw }] : [];
 }
 
 /** A CatRig wearing its equipped Wardrobe hat. @param {string} id @param {number} [seed] */

@@ -153,7 +153,7 @@ export function render(params) {
     : h('div', { class: 'challenges', role: 'radiogroup', 'aria-label': 'Challenge' }, [
         opt('', '🙂 Normal', 'The usual. Snacks, cats, chaos.'),
         opt('iron', '🛡 Iron Cat', 'One life. No Cat Powers. No excuses.', ch.iron),
-        opt('nap', '💤 Nap Time', 'Only 4 cushions. Choose wisely.', ch.nap),
+        opt('nap', '💤 Nap Time', 'Only 4 cats. Seat them wisely.', ch.nap),
       ]);
 
   const title = endless ? '∞ The Infinite Laundry Basket' : `${lvl?.id} · ${lvl?.name}`;

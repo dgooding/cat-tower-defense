@@ -3,6 +3,9 @@
 // (at wave start/clear and at level end), never every frame.
 import { bump, bumpMax } from './save.js';
 
+/** Cats seated at once for "If I Fits, I Sits". */
+const FULL_HOUSE = 10;
+
 export class Tally {
   /** @param {import('../game/game.js').Game} game @param {{enabled: () => boolean}} [o] */
   constructor(game, o = { enabled: () => true }) {
@@ -31,13 +34,10 @@ export class Tally {
     switch (ev.type) {
       case 'place': {
         this.add('catsPlaced');
-        if (!this.filledOnce) {
-          let all = true;
-          for (let i = 0; i < sim.towers.length; i++) if (!sim.towers[i] && !sim.spotLocked[i]) all = false;
-          if (all) {
-            this.filledOnce = true;
-            this.add('allSpotsFilled');
-          }
+        // "If I Fits, I Sits": a full house of seated cats at once.
+        if (!this.filledOnce && sim.towers.filter(Boolean).length >= FULL_HOUSE) {
+          this.filledOnce = true;
+          this.add('allSpotsFilled');
         }
         break;
       }

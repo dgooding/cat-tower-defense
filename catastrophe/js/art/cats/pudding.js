@@ -161,7 +161,7 @@ export const pudding = {
     T2: [{ layer: 'neck', draw: bowTie }],
     T3: [
       { layer: 'neck', draw: bowTie },
-      { layer: 'head', draw: beret },
+      { layer: 'head', hat: true, draw: beret },
     ],
     '4A': [
       { layer: 'body', draw: bandolier },

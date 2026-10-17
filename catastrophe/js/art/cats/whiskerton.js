@@ -491,7 +491,7 @@ function fxSay(rig, text, x, y) {
 }
 
 const base = [
-  { layer: /** @type {const} */ ('head'), draw: mortarboard },
+  { layer: /** @type {const} */ ('head'), hat: true, draw: mortarboard },
   { layer: /** @type {const} */ ('head'), draw: monocle },
 ];
 const t2 = [{ layer: /** @type {const} */ ('neck'), draw: chalk }, { layer: /** @type {const} */ ('neck'), draw: bowTie }];
