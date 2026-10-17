@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex" />
+    <meta name="view-transition" content="same-origin" />
+    <title>Catastrophe! · Interactive Mode</title>
+    <meta name="description" content="Catastrophe! Interactive Mode: story, world map, heroes, a bestiary, hats and Cat-chievements." />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./css/tokens.css?v=1" />
+    <link rel="stylesheet" href="./css/interactive.css?v=1" />
+  </head>
+  <body class="ix">
+    <a class="skip-link" href="#outlet">Skip to content</a>
+    <header class="ix-top" id="ix-top">
+      <div class="ix-top-left">
+        <a class="btn small" href="./play.html">← Quick Play</a>
+        <a class="ix-logo" href="#/map" aria-label="Catastrophe! Interactive Mode: world map">
+          Catastrophe<span class="bang">!</span>
+          <small>Interactive Mode</small>
+        </a>
+      </div>
+      <nav class="ix-nav" aria-label="Interactive Mode">
+        <a class="ix-tab" href="#/map" data-route="map">🗺️ <span>Map</span></a>
+        <a class="ix-tab" href="#/catalog" data-route="catalog">📖 <span>Cat-alog</span></a>
+        <a class="ix-tab" href="#/wardrobe" data-route="wardrobe">🎩 <span>Wardrobe</span></a>
+        <a class="ix-tab" href="#/achievements" data-route="achievements">🏆 <span>Cat-chievements</span></a>
+        <a class="ix-tab" href="#/credits" data-route="credits">🎬 <span>Credits</span></a>
+      </nav>
+      <div class="ix-top-right">
+        <span class="paw-chip" id="paw-chip" title="Paw prints available (earn them with stars)">🐾 <b id="paw-count">0</b></span>
+        <button class="icon-btn" id="sound-btn" type="button" aria-pressed="false" title="Meows on click (off by default)">🔇</button>
+        <button class="icon-btn" id="calm-btn" type="button" aria-pressed="false" title="Calm motion (fewer animations)">🐢</button>
+        <a class="btn small" href="./index.html">✨ New Feature Page</a>
+      </div>
+    </header>
+
+    <main id="outlet" class="ix-outlet" tabindex="-1" aria-live="polite">
+      <div class="ix-loading" role="status">
+        <span class="paw-spin" aria-hidden="true">🐾</span>
+        <p>Waking the cats… (five more minutes)</p>
+      </div>
+    </main>
+    <noscript><p class="ix-noscript">Interactive Mode needs JavaScript to draw the cats. Try <a href="./play.html">Quick Play</a>.</p></noscript>
+
+    <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+    <div class="paw-trail" id="paw-trail" aria-hidden="true"></div>
+
+    <script type="module" src="./js/interactive/main.js?v=1"></script>
+  </body>
+</html>

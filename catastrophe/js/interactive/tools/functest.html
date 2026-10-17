@@ -1,0 +1,163 @@
+﻿<!doctype html>
+<meta charset="utf-8" />
+<iframe id="f" style="width: 1280px; height: 800px"></iframe>
+<pre id="log"></pre>
+<script type="module">
+  // Drives interactive.html (demo mode, in-memory progress) and logs PASS/FAIL lines.
+  const log = (s) => (document.getElementById('log').textContent += s + '\n');
+  const f = /** @type {HTMLIFrameElement} */ (document.getElementById('f'));
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const ok = (name, cond, extra = '') => log(`${cond ? 'PASS' : 'FAIL'} ${name}${extra ? ` (${extra})` : ''}`);
+  const W = () => f.contentWindow;
+  const D = () => f.contentDocument;
+  async function until(fn, ms = 4000) {
+    const t0 = performance.now();
+    while (performance.now() - t0 < ms) {
+      try {
+        const v = fn();
+        if (v) return v;
+      } catch {}
+      await sleep(50);
+    }
+    return null;
+  }
+  async function go(hash) {
+    const prev = D().getElementById('outlet').firstElementChild;
+    const t0 = performance.now();
+    W().location.hash = hash;
+    await until(() => D().getElementById('outlet').firstElementChild !== prev, 15000);
+    await sleep(200);
+    log(`  (${hash} rendered in ${Math.round(performance.now() - t0)}ms)`);
+  }
+  try {
+    f.src = `../../../interactive.html?demo=1&debug=1${new URLSearchParams(location.search).has('anim') ? '' : '&still=1'}#/map`;
+    await until(() => D()?.querySelector('.map-node'), 8000);
+    const nodes = D().querySelectorAll('.map-node');
+    ok('map shows 12 levels + endless', nodes.length === 13, `${nodes.length}`);
+    ok('locked nodes say "Beat X first"', D().querySelector('.map-node.locked .node-lock')?.textContent === 'Beat 2-3 first');
+    ok('header paw count = 13', D().getElementById('paw-count').textContent === '13');
+    ok('map has a live canvas', !!D().querySelector('.map-canvas'));
+
+    await go('#/briefing/2-3');
+    await until(() => D().querySelector('.polaroid'));
+    ok('briefing has threat + boss + recruit cards', D().querySelectorAll('.polaroid').length === 4, `${D().querySelectorAll('.polaroid').length}`);
+    ok('briefing continue â†’ hero', D().querySelector('a[href="#/hero/2-3"]') != null);
+
+    await go('#/hero/2-3');
+    await until(() => D().querySelector('.hero-card'));
+    ok('3 hero cards', D().querySelectorAll('.hero-card').length === 3);
+    const iron = [...D().querySelectorAll('.challenge')].find((b) => b.textContent.includes('Iron'));
+    iron.click();
+    await sleep(150);
+    const goBtn = D().querySelector('.go-btn');
+    ok('locked challenge (0 stars) is not selectable', !goBtn.href.includes('challenge='), goBtn.getAttribute('href'));
+    ok('locked challenge shows a toast', D().querySelectorAll('.toast-note').length > 0);
+
+    await go('#/hero/2-2');
+    await until(() => D().querySelector('.hero-card') && D().querySelector('.go-btn')?.href.includes('/play/2-2'));
+    [...D().querySelectorAll('.hero-card .pick')][1].click();
+    [...D().querySelectorAll('.challenge')].find((b) => b.textContent.includes('Nap Time')).click();
+    await sleep(100);
+    const href = D().querySelector('.go-btn').getAttribute('href');
+    ok('Letâ€™s go URL', href === './play.html?mode=interactive&hero=nebula&challenge=nap#/play/2-2', href);
+    ok('last hero remembered', W().localStorage.getItem('cata:lastHero') === 'nebula');
+    [...D().querySelectorAll('.challenge')][0].click();
+    await sleep(50);
+    ok('Normal omits challenge', !D().querySelector('.go-btn').getAttribute('href').includes('challenge'));
+
+    await go('#/wardrobe/pudding');
+    await until(() => D().querySelector('.hat-card'));
+    const cards = [...D().querySelectorAll('.hat-card')];
+    ok('wardrobe lists every hat', cards.length > 1, `${cards.length}`);
+    const buyBtns = () => [...D().querySelectorAll('.hat-card .btn.primary')].filter((b) => b.textContent.startsWith('Buy'));
+    const cost = (b) => Number(b.textContent.replace(/\D+/g, ''));
+    const cheap = buyBtns().sort((a, b) => cost(a) - cost(b))[0];
+    const before = Number(D().getElementById('paw-count').textContent);
+    const c1 = cost(cheap);
+    cheap.click();
+    await sleep(200);
+    const after = Number(D().getElementById('paw-count').textContent);
+    ok('buying spends paw prints', after === before - c1, `${before} â†’ ${after}`);
+    ok('bought hat is worn', !!D().querySelector('.hat-card.on'));
+    let guard = 0;
+    while (guard++ < 12) {
+      const left = Number(D().getElementById('paw-count').textContent);
+      const btns = buyBtns();
+      if (!btns.length) break;
+      const pricey = btns.sort((a, b) => cost(b) - cost(a))[0];
+      if (cost(pricey) > left) {
+        const toastsBefore = D().querySelectorAll('.toast-note').length;
+        pricey.click();
+        await sleep(150);
+        const t = [...D().querySelectorAll('.toast-note')].pop()?.textContent ?? '';
+        ok('not enough paw prints â†’ cute message', /short|more|to go|budget/i.test(t) && D().querySelectorAll('.toast-note').length >= toastsBefore, t);
+        ok('paw prints unchanged when poor', Number(D().getElementById('paw-count').textContent) === left);
+        break;
+      }
+      pricey.click();
+      await sleep(150);
+    }
+    const take = [...D().querySelectorAll('.hat-card .btn')].find((b) => b.textContent === 'Take off');
+    take?.click();
+    await sleep(100);
+    ok('unequip works', !D().querySelector('.hat-card.on'));
+
+    await go('#/achievements');
+    await until(() => D().querySelector('.badge'));
+    ok('30 achievements', D().querySelectorAll('.badge').length === 30);
+    ok('Fashion Week unlocked after 3 hats', D().querySelectorAll('.badge.unlocked').length >= 9, `${D().querySelectorAll('.badge.unlocked').length} unlocked`);
+
+    await go('#/catalog');
+    await until(() => D().querySelector('.catalog-card'));
+    ok('catalog cats tab = 8', D().querySelectorAll('.catalog-card').length === 8);
+    D().querySelector('[data-tab="enemies"]').click();
+    await sleep(100);
+    ok('catalog enemies tab = 20', D().querySelectorAll('.catalog-card').length === 20);
+    await go('#/catalog/good-boy');
+    await until(() => D().querySelector('.detail-canvas'));
+    ok('detail marks seen', W().document.title.includes('Good Boy'));
+
+    await go('#/story/prologue');
+    await until(() => D().querySelector('.story-count'));
+    const cnt = () => D().querySelector('.story-count').textContent;
+    D().body.focus();
+    for (let i = 0; i < 4 && !cnt().startsWith('2'); i++) {
+      D().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+      await sleep(120);
+    }
+    ok('ArrowRight finishes typing, then advances', cnt().startsWith('2'), cnt());
+    ok('header hidden in story', getComputedStyle(D().getElementById('ix-top')).display === 'none');
+    D().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await until(() => W().location.hash === '#/map');
+    ok('Esc skips to map', W().location.hash === '#/map', W().location.hash);
+    ok('demo never touched the save', W().localStorage.getItem('cata:save:v1') === null || !JSON.parse(W().localStorage.getItem('cata:save:v1')).hats.owned.length);
+    ok('no runtime errors', !D().querySelector('.debug-overlay pre'), [...D().querySelectorAll('.debug-overlay pre')].map((p) => p.textContent).join(' | ').slice(0, 600));
+
+    W().dispatchEvent(new (W().CustomEvent)('cata:achievement', { detail: ['reply-all'] }));
+    await sleep(100);
+    ok('achievement event → toast', [...D().querySelectorAll('.toast-note')].some((t) => t.textContent.includes('Reply All')));
+
+    // Real (non-demo) first-visit flow in this throwaway browser profile.
+    W().localStorage.removeItem('cata:save:v1');
+    f.src = '../../../interactive.html?still=1&debug=1#/';
+    await until(() => W().location.hash === '#/story/prologue' && D().querySelector('.story-count'), 8000);
+    ok('first visit plays the prologue', W().location.hash === '#/story/prologue', W().location.hash);
+    D().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await until(() => W().location.hash === '#/story/world-countryside' && D().querySelector('.story-count'), 8000);
+    ok('then the World 1 intro', W().location.hash === '#/story/world-countryside', W().location.hash);
+    D().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await until(() => W().location.hash === '#/map' && D().querySelector('.map-node'), 8000);
+    ok('then the map', W().location.hash === '#/map', W().location.hash);
+    const saved = JSON.parse(W().localStorage.getItem('cata:save:v1') ?? '{}');
+    ok('seen flags saved', !!saved.seen?.['story:prologue'] && !!saved.seen?.['story:world-countryside']);
+    ok('fresh map: only 1-1 open', D().querySelectorAll('.map-node:not(.locked)').length === 1);
+    W().location.hash = '#/';
+    await until(() => W().location.hash === '#/map', 4000);
+    ok('#/ goes to map once the prologue is seen', W().location.hash === '#/map', W().location.hash);
+    W().localStorage.removeItem('cata:save:v1');
+    W().localStorage.removeItem('cata:lastHero');
+    log('DONE');
+  } catch (e) {
+    log('ERR ' + e.stack);
+  }
+</script>

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex" />
+    <title>Catastrophe! · Design Gallery</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./css/tokens.css?v=1" />
+    <link rel="stylesheet" href="./css/gallery.css?v=2" />
+  </head>
+  <body>
+    <header class="top">
+      <a class="btn" href="./index.html">✨ New Feature Page</a>
+      <h1 class="logo">Catastrophe<span class="bang">!</span> <small>Design Gallery · Rounds D1–D3 (full cast &amp; worlds)</small></h1>
+      <nav class="tabs" role="tablist" aria-label="Gallery sections">
+        <button class="tab" role="tab" data-tab="cats" aria-selected="true">🐱 Cats</button>
+        <button class="tab" role="tab" data-tab="enemies" aria-selected="false">👾 Enemies &amp; Bosses</button>
+        <button class="tab" role="tab" data-tab="rooms" aria-selected="false">🏞 Rooms</button>
+      </nav>
+    </header>
+
+    <main>
+      <p class="intro">
+        Review each card with <b>👍 Approve</b> or <b>✏️ Change</b> and add notes. Your choices save on this device. When you're done,
+        hit <b>📋 Copy all feedback</b> and paste it to Copilot in <b>one</b> message.
+      </p>
+      <div id="app"></div>
+      <noscript><p class="intro">This gallery needs JavaScript to draw the characters.</p></noscript>
+    </main>
+
+    <footer class="fbbar" aria-label="Feedback">
+      <span class="count" id="fb-count">👍 0 approved · ✏️ 0 to change</span>
+      <button class="btn primary" id="copy-fb" type="button">📋 Copy all feedback</button>
+      <button class="linkish" id="reset-fb" type="button">reset</button>
+    </footer>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <dialog id="fb-dialog">
+      <h3>Copy your feedback</h3>
+      <p>Your browser blocked automatic copying. Select all of this text, copy it, and paste it to Copilot:</p>
+      <textarea id="fb-text" readonly></textarea>
+      <form method="dialog"><button class="btn">Done</button></form>
+    </dialog>
+
+    <script type="module" src="./js/gallery/gallery.js?v=2"></script>
+  </body>
+</html>

@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+    <title>Catastrophe! · Dev sheet</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&display=swap" rel="stylesheet" />
+    <style>
+      body { margin: 0; background: #fbf5e9; font: 600 13px Fredoka, sans-serif; color: #3b3a4a; }
+      canvas { display: block; }
+      #err { color: #b00; white-space: pre-wrap; padding: 8px; }
+    </style>
+  </head>
+  <body>
+    <div id="err"></div>
+    <canvas id="c"></canvas>
+    <script type="module">
+      // Usage:
+      //   sheet.html?kind=cat&ids=pudding,sriracha&view=expr     (cats/kittens: view=expr|tiers)
+      //   sheet.html?kind=enemy&ids=vroomba,monday               (walk / idle / hit / defeat)
+      //   sheet.html?kind=boss&ids=bathzilla                     (adds one cell per phase)
+      //   sheet.html?kind=room&ids=countryside                   (all 3 layouts)
+      window.addEventListener('error', (e) => (document.getElementById('err').textContent += e.message + '\n'));
+      window.addEventListener('unhandledrejection', (e) => (document.getElementById('err').textContent += String(e.reason) + '\n'));
+      const { CatRig, EXPRESSIONS } = await import('../js/art/cats/catrig.js');
+      const { EnemyRig } = await import('../js/art/enemies/enemyrig.js');
+      const R = await import('../js/art/registry.js');
+      const { drawRoom, STAGE_W, STAGE_H } = await import('../js/art/rooms/common.js');
+      const { Pen } = await import('../js/art/brush.js');
+
+      const q = new URLSearchParams(location.search);
+      const kind = q.get('kind') ?? 'cat';
+      const view = q.get('view') ?? 'expr';
+      const table = { cat: R.CAT_ART, kitten: R.KITTEN_ART, enemy: R.ENEMY_ART, boss: R.BOSS_ART, room: R.ROOM_ART }[kind];
+      const ids = (q.get('ids') ?? Object.keys(table).join(',')).split(',').filter((id) => table[id]);
+
+      const cells = [];
+      let seed = 3;
+      for (const id of ids) {
+        if (kind === 'cat' || kind === 'kitten') {
+          const art = table[id];
+          const list = view === 'tiers' ? art.tiers.map((t) => ({ label: `${id} ${t.label}`, expr: 'idle', tier: t.id })) : EXPRESSIONS.map((e) => ({ label: `${id} · ${e}`, expr: e, tier: 'T1' }));
+          for (const it of list) {
+            const rig = new CatRig(art.spec, seed++);
+            rig.tier = it.tier;
+            rig.setExpression(it.expr);
+            const k = art.spec.scale ?? 1;
+            cells.push({ label: it.label, w: 240, h: 250, update: (dt) => rig.update(dt, { x: 0.4, y: 0.1 }), draw: (ctx) => { ctx.translate(130, 228); const s = 0.7 * k; ctx.scale(s, s); rig.draw(ctx, s); } });
+          }
+        } else if (kind === 'enemy' || kind === 'boss') {
+          const spec = table[id].spec;
+          const H = spec.height ?? 180;
+          const big = kind === 'boss';
+          const cw = big ? 420 : 240, ch = big ? 420 : 250;
+          const s = Math.min((ch - 70) / H, (cw - 30) / (spec.width ?? H * 0.8));
+          const modes = ['walk', 'idle', 'hit', 'death'];
+          if (big) for (let p = 0; p < (spec.phases?.length ?? 0); p++) modes.push('phase' + p);
+          for (const mode of modes) {
+            const rig = new EnemyRig(spec, seed++);
+            let timer = 0;
+            const reset = () => {
+              rig.st.mode = 'walk'; rig.st.deathT = 0; rig.st.hit = 0;
+              if (mode === 'idle') rig.setMode('idle');
+              if (mode.startsWith('phase')) rig.st.phase = Number(mode.slice(5));
+            };
+            reset();
+            cells.push({
+              label: `${id} · ${mode.startsWith('phase') ? spec.phases[Number(mode.slice(5))] : mode}`,
+              w: cw, h: ch,
+              update: (dt) => {
+                timer += dt;
+                if (mode === 'hit' && timer > 1) { timer = 0; rig.hit(); }
+                if (mode === 'death' && timer > 0.6 && rig.st.mode === 'walk') rig.die();
+                if (mode === 'death' && timer > 3.2) { timer = 0; reset(); }
+                rig.update(dt, { x: 0.5, y: 0.1 });
+              },
+              draw: (ctx) => { ctx.translate(cw / 2, ch - 22); ctx.scale(s, s); rig.draw(ctx, s); },
+            });
+          }
+        } else if (kind === 'room') {
+          const room = table[id].room;
+          const pen = new Pen(null);
+          let t = 0;
+          for (const layout of room.layouts) {
+            const W = 640, Hh = 360;
+            cells.push({
+              label: `${id} · ${layout.id} ${layout.name}`,
+              w: W, h: Hh + 24,
+              update: (dt) => (t += dt),
+              draw: (ctx) => {
+                ctx.translate(0, 24);
+                ctx.beginPath(); ctx.rect(0, 0, W, Hh); ctx.clip();
+                ctx.scale(W / STAGE_W, Hh / STAGE_H);
+                pen.ctx = ctx;
+                drawRoom(ctx, pen, room, layout, t, { light: Number(q.get('light') ?? 0.2), lw: 4 });
+              },
+            });
+          }
+        }
+      }
+
+      const cols = Number(q.get('cols') ?? (kind === 'room' ? 3 : kind === 'boss' ? 4 : 5));
+      const cw = Math.max(...cells.map((c) => c.w)), ch = Math.max(...cells.map((c) => c.h));
+      const c = document.getElementById('c');
+      const dpr = Math.min(2, devicePixelRatio || 1);
+      const rows = Math.ceil(cells.length / cols);
+      c.style.width = cols * cw + 'px';
+      c.style.height = rows * ch + 'px';
+      c.width = cols * cw * dpr;
+      c.height = rows * ch * dpr;
+      const ctx = c.getContext('2d');
+      let last = performance.now();
+      function frame(now) {
+        const dt = Math.min(0.05, (now - last) / 1000);
+        last = now;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.fillStyle = '#fbf5e9';
+        ctx.fillRect(0, 0, c.width, c.height);
+        cells.forEach((cell, i) => {
+          cell.update(dt);
+          const x = (i % cols) * cw, y = Math.floor(i / cols) * ch;
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.strokeStyle = 'rgba(59,58,74,.2)';
+          ctx.strokeRect(0.5, 0.5, cw - 1, ch - 1);
+          ctx.fillStyle = '#3b3a4a';
+          ctx.fillText(cell.label, 8, 16);
+          cell.draw(ctx);
+          ctx.restore();
+        });
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    </script>
+  </body>
+</html>

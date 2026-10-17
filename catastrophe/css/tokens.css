@@ -1,0 +1,135 @@
+/* Design tokens — original palette for CATASTROPHE! (paper, ink, washi tape). */
+:root {
+  --paper: #fbf5e9;
+  --paper-2: #f4ead6;
+  --ink: #3b3a4a;
+  --ink-soft: #6b6a7c;
+  --pink: #f4a6b7;
+  --pink-deep: #e07d95;
+  --gold: #f2c14e;
+  --mint: #bfe6d3;
+  --peach: #ffd3b5;
+  --lilac: #d9ccf2;
+  --sky: #bfe3f2;
+  --approve: #7cbf7a;
+  --change: #f29e4c;
+
+  --font-display: 'Fredoka', 'Arial Rounded MT Bold', ui-rounded, system-ui, sans-serif;
+  --font-body: 'Zen Maru Gothic', ui-rounded, 'Segoe UI', system-ui, sans-serif;
+
+  --r-sm: 10px;
+  --r-md: 18px;
+  --r-lg: 28px;
+  --shadow: 0 1px 0 rgba(59, 58, 74, 0.06), 0 10px 26px -12px rgba(59, 58, 74, 0.35);
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(244, 166, 183, 0.18), transparent 40%),
+    radial-gradient(circle at 88% 20%, rgba(191, 227, 242, 0.35), transparent 45%),
+    var(--paper);
+  color: var(--ink);
+  font: 500 16px/1.55 var(--font-body);
+  min-height: 100vh;
+}
+
+/* Paper grain overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+  opacity: 0.07;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .23 0 0 0 0 .22 0 0 0 0 .29 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.15;
+  margin: 0;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 3px dashed var(--pink-deep);
+  outline-offset: 3px;
+}
+
+.btn,
+.chip,
+.fb-btn {
+  font: 600 15px/1 var(--font-display);
+  color: var(--ink);
+  background: #fffdf6;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition:
+    transform 0.25s var(--spring),
+    background-color 0.2s,
+    box-shadow 0.2s;
+  box-shadow: 0 3px 0 var(--ink);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn:hover,
+.chip:hover,
+.fb-btn:hover {
+  transform: translateY(-2px) rotate(-1deg);
+}
+.btn:active,
+.chip:active,
+.fb-btn:active {
+  transform: translateY(2px) scale(0.95);
+  box-shadow: 0 1px 0 var(--ink);
+}
+.btn.primary {
+  background: var(--pink);
+}
+.btn.big {
+  font-size: 20px;
+  padding: 16px 26px;
+}
+
+.tape {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  width: 96px;
+  height: 26px;
+  transform: translateX(-50%) rotate(-3deg);
+  background: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.35) 0 6px, transparent 6px 12px), var(--mint);
+  opacity: 0.85;
+  border-radius: 3px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
