@@ -43,6 +43,8 @@ Progress lives in `localStorage` (`cata:save:v1`); an in-progress run autosaves 
 
 **Music** is composed in code too (`js/audio/songs.js` is the score, `js/audio/music.js` plays it): a music-box lullaby on menus, a theme per world (porch guitar, kotatsu lounge, bathhouse koto, sky waltz) and a villain theme whenever a boss is on the field. Drums and arpeggios fade in during waves and out between them; pausing ducks the music. It is silent until the first click, stays under the sound effects, and goes quiet with mute, a hidden tab or the Boss Key. In Interactive Mode it only plays after you turn sound on (🔇 button). With `?debug=1`, `__cata.music()` shows what's playing.
 
+**On phones:** when the stage gets small, `Game.layout` adds `body.phone` and a HUD scale `--hz`, so buttons stay finger-sized (about 44 CSS px). Powers stack on the left edge, speed/pause/mute on the right, and the cat tray fills the bottom strip. On touch, the first tap shows the ghost (range, OK or not), and tapping the ghost seats the cat. When you drag a cat from the tray, the ghost floats above your fingertip. Starting a level from the menus goes full screen with landscape lock where the browser allows it (Android). **Offline / installable:** `sw.js` (scope: this folder only) precaches every versioned file after the first visit and keeps the Latin font files. Pages load network-first, so updates still arrive. "Add to Home Screen" gives an app icon and full screen. The service worker is skipped on localhost unless you add `?sw=1`.
+
 **Checks (Node only, no installs):**
 
 ```
@@ -68,7 +70,7 @@ Then open <http://localhost:5173/>.
 
 ## Publish
 
-Copy this whole `catastrophe/` folder into the repo your static host serves, commit, and push. **First run `node tools/stamp.mjs`** (`--check` only verifies): it writes an import map into each page that loads every module as `file.js?v=<content hash>`, and stamps stylesheets and entry scripts the same way. Returning visitors then re-download only the files that changed and never mix old and new modules, with no build step. All paths are relative, so it works at any URL. It is published in `dgooding/cat-tower-defense` (branch `main`) at `/catastrophe/`; Porkbun Static Hosting deploys every push.
+Copy this whole `catastrophe/` folder into the repo your static host serves, commit, and push. **First run `node tools/stamp.mjs`** (`--check` only verifies): it writes an import map into each page that loads every module as `file.js?v=<content hash>`, stamps stylesheets and entry scripts the same way, and regenerates the offline precache list in `sw.js`. Returning visitors then re-download only the files that changed and never mix old and new modules, with no build step. All paths are relative, so it works at any URL. It is published in `dgooding/cat-tower-defense` (branch `main`) at `/catastrophe/`; Porkbun Static Hosting deploys every push.
 
 ## Layout
 

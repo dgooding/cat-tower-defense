@@ -14,6 +14,7 @@ import { HEROES } from '../data/heroes.js';
 import { ACHIEVEMENT_BY_ID } from '../data/achievements.js';
 import { setMuted, isMuted, setHidden, unlockAudio } from '../audio/sfx.js';
 import { installMusic, musicState } from '../audio/music.js';
+import { registerOffline } from '../core/pwa.js';
 import { installDebug } from './debug.js';
 
 const params = new URLSearchParams(location.search);
@@ -53,6 +54,7 @@ const game = new Game({
 });
 applySettings(game);
 if (!AUTOPLAY) installMusic(game);
+if (!AUTOPLAY) registerOffline();
 
 const tally = new Tally(game, { enabled: () => !AUTOPLAY });
 
@@ -129,6 +131,20 @@ window.addEventListener('cata:achievement', (e) => {
     if (a) hud.toast(`🏆 ${a.name} — ${a.desc}`, 5);
   }
 });
+
+/**
+ * Phones: go fullscreen and lock landscape when the player starts playing (needs a tap; Android only;
+ * iPhones don't allow it and keep the rotate note). Installed apps are already fullscreen.
+ */
+function phoneFullscreen() {
+  const coarse = matchMedia('(pointer: coarse)').matches;
+  if (!coarse || !document.body.classList.contains('phone') || document.fullscreenElement || matchMedia('(display-mode: standalone)').matches) return;
+  const el = document.documentElement;
+  if (!el.requestFullscreen) return;
+  el.requestFullscreen({ navigationUI: 'hide' })
+    .then(() => /** @type {any} */ (window.screen.orientation)?.lock?.('landscape'))
+    .catch(() => {});
+}
 
 function currentLevelId() {
   const m = /^#\/play\/([\w-]+)$/.exec(location.hash);
@@ -254,6 +270,7 @@ window.addEventListener('cata:mute', () => {
 });
 screen.addEventListener('click', (e) => {
   unlockAudio();
+  if (/** @type {HTMLElement} */ (e.target).closest('a[href^="#/play"]')) phoneFullscreen();
   const b = /** @type {HTMLElement} */ (e.target).closest('[data-act]');
   if (!b) return;
   const act = /** @type {HTMLElement} */ (b).dataset.act;

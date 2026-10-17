@@ -36,6 +36,7 @@ export class Game {
     this.acc = 0;
     this.last = performance.now();
     this.k = 1;
+    this.hz = 1;
     /** @type {Set<(ev:any)=>void>} */
     this.listeners = new Set();
     /** @type {Set<(dt:number)=>void>} */
@@ -58,6 +59,13 @@ export class Game {
     this.k = sw / STAGE_W;
     Object.assign(this.stage.style, { width: sw + 'px', height: sh + 'px', left: Math.floor((w - sw) / 2) + 'px', top: Math.floor((h - sh) / 2) + 'px' });
     this.stage.style.setProperty('--k', String(this.k));
+    // Small screens: grow the HUD so buttons stay finger-sized (~44 CSS px) and switch to the phone layout.
+    const hz = Math.max(1, Math.min(1.7, 0.58 / this.k));
+    this.hz = hz >= 1.15 ? hz : 1;
+    this.stage.style.setProperty('--hz', this.hz.toFixed(3));
+    document.body.classList.toggle('phone', this.hz > 1);
+    // No letterbox margin beside the stage: the window-pinned Boss Key button would sit on top of the HUD.
+    document.body.classList.toggle('edge', (w - sw) / 2 < 52);
     this.renderer.resize(sw, sh);
   }
 

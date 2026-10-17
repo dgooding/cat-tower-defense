@@ -615,7 +615,9 @@ body:not([data-screen='level']) #game {
   animation: pop-in 0.3s var(--spring) both;
   z-index: 5;
 }
-.coach[hidden] {
+.coach[hidden],
+#ui:has(#overlay:not([hidden])) .coach,
+#ui:has(#settings) .coach {
   display: none;
 }
 .coach b {
@@ -1505,4 +1507,99 @@ body.reduced *::after {
 #ui .power[hidden],
 #ui .hero-panel[hidden] {
   display: none;
+}
+
+/* ---------- Phone layout (body.phone, set by Game.layout when the stage is small) ----------
+   --hz is the HUD scale: it keeps buttons finger-sized (~44 CSS px). The `scale` property doesn't change
+   layout and stacks with the existing transform animations, so each cluster grows from its own corner and
+   neighbours are offset by "gap + size x --hz". */
+.phone .hud-tl {
+  width: 640px;
+  transform-origin: 0 0;
+  scale: var(--hz, 1);
+}
+.phone .hud-tr {
+  right: 22px;
+  transform-origin: 100% 0;
+  scale: var(--hz, 1);
+}
+/* Edge-to-edge phones: park the Boss Key button in the free gap on the right edge, between GO and the buttons. */
+.phone.edge #tie {
+  top: 38%;
+}
+.phone .hud-tl .level-name,
+.phone .pv-name,
+.phone .tray-key,
+.phone .pw-key,
+.phone .pw-name,
+.phone .card-up .cu-hint {
+  display: none;
+}
+/* Powers: a column on the left edge. Speed / pause / mute: a column on the right edge. */
+.phone .hud-bl,
+.phone .hud-br {
+  flex-direction: column;
+  gap: 14px;
+}
+.phone .hud-bl {
+  transform-origin: 0 100%;
+  scale: var(--hz, 1);
+}
+.phone .hud-br {
+  transform-origin: 100% 100%;
+  scale: var(--hz, 1);
+}
+/* The cat tray fills the bottom strip between the two columns. */
+.phone .tray {
+  right: calc(48px + 76px * var(--hz, 1));
+  bottom: 16px;
+  padding: 8px 12px 12px;
+  transform-origin: 100% 100%;
+  scale: var(--hz, 1);
+}
+.phone .hero-panel {
+  left: calc(44px + 120px * var(--hz, 1));
+  bottom: calc(36px + 112px * var(--hz, 1));
+  transform-origin: 0 100%;
+  scale: var(--hz, 1);
+}
+.phone .bossbar {
+  top: calc(30px + 80px * var(--hz, 1));
+  transform-origin: 50% 0;
+  scale: var(--hz, 1);
+}
+.phone #toasts {
+  bottom: calc(40px + 112px * var(--hz, 1));
+  transform-origin: 50% 100%;
+  scale: var(--hz, 1);
+  width: 760px;
+}
+.phone .banner-tape,
+.phone .card-up,
+.phone .coach {
+  scale: var(--hz, 1);
+}
+.phone .card-up {
+  transform-origin: 0 0;
+}
+.phone .panel {
+  scale: min(var(--hz, 1), 1.3);
+}
+.phone .coach.at-tray {
+  right: calc(48px + 76px * var(--hz, 1));
+  bottom: calc(40px + 120px * var(--hz, 1));
+  transform-origin: 100% 100%;
+}
+.phone .coach.at-go {
+  top: calc(30px + 100px * var(--hz, 1));
+  transform-origin: 100% 0;
+}
+.phone .coach.at-top {
+  top: calc(30px + 100px * var(--hz, 1));
+  transform-origin: 50% 0;
+}
+.phone .coach.at-left {
+  left: calc(44px + 120px * var(--hz, 1));
+  top: calc(30px + 100px * var(--hz, 1));
+  transform-origin: 0 0;
 }

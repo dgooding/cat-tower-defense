@@ -23,6 +23,8 @@ function h(html) {
 }
 /** @param {string} s */
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+/** Stage px the drag ghost floats above a fingertip, so the finger doesn't hide the spot. */
+const TOUCH_LIFT = 120;
 
 /** Short stat line for a tier. @param {import('../data/cats.js').CatDef} def @param {import('../data/cats.js').TierStats} s */
 export function statLine(def, s) {
@@ -56,7 +58,7 @@ export class Hud {
     this.selected = -1;
     /** @type {'none'|'card'} */
     this.menu = 'none';
-    /** Seating a new cat (slot -1) or moving a seated one (slot ≥ 0); `drag` = started by dragging from the tray. @type {{cat:string, slot:number, drag:boolean, sx:number, sy:number}|null} */
+    /** Seating a new cat (slot -1) or moving a seated one (slot ≥ 0); `drag` = started by dragging from the tray; `touch` = tap-to-preview mode. @type {{cat:string, slot:number, drag:boolean, sx:number, sy:number, touch?:boolean}|null} */
     this.placing = null;
     this.aiming = false;
     this.mouse = { x: 960, y: 540, inside: false, t: 0 };
@@ -425,6 +427,16 @@ export class Hud {
         return;
       }
       if (this.placing) {
+        // Touch: the first tap previews (ghost, range, OK/not OK), tapping the ghost again seats the cat.
+        if (e.pointerType === 'touch' && !this.placing.drag) {
+          const g = this.game.renderer.ghost;
+          if (g && Math.hypot(g.x - p.x, g.y - p.y) < 80) this.commitPlacing(g.x, g.y);
+          else {
+            this.placing.touch = true;
+            this.refreshGhost();
+          }
+          return;
+        }
         this.commitPlacing(p.x, p.y, e.shiftKey);
         return;
       }
@@ -477,10 +489,17 @@ export class Hud {
       if (this.placing && !this.placing.drag) this.game.renderer.ghost = null;
     });
     // Dragging a cat out of the tray: follow the pointer anywhere, drop on release.
+    // Fingers hide what's under them, so on touch the ghost floats a little above the fingertip.
+    /** @param {PointerEvent} e */
+    const dragPoint = (e) => {
+      const p = this.game.toStage(e.clientX, e.clientY);
+      if (e.pointerType === 'touch') p.y -= TOUCH_LIFT;
+      return p;
+    };
     window.addEventListener('pointermove', (e) => {
       const pl = this.placing;
       if (!pl || !pl.drag || !this.active) return;
-      const p = this.game.toStage(e.clientX, e.clientY);
+      const p = dragPoint(e);
       this.mouse = { x: p.x, y: p.y, inside: true, t: performance.now() };
       this.refreshGhost();
     });
@@ -488,9 +507,15 @@ export class Hud {
       const pl = this.placing;
       if (!pl || !pl.drag || !this.active) return;
       pl.drag = false;
-      const p = this.game.toStage(e.clientX, e.clientY);
+      const p = dragPoint(e);
       // A click on the tray (no real drag) keeps the cat in hand for click-to-place.
-      if (Math.hypot(e.clientX - pl.sx, e.clientY - pl.sy) < 12) return;
+      if (Math.hypot(e.clientX - pl.sx, e.clientY - pl.sy) < 12) {
+        if (e.pointerType === 'touch') {
+          pl.touch = true;
+          this.refreshGhost();
+        }
+        return;
+      }
       if (this.overHud(p.x, p.y)) return this.cancelPlacing();
       this.commitPlacing(p.x, p.y, e.shiftKey);
     });
@@ -531,8 +556,12 @@ export class Hud {
     for (const el of [this.tray, this.root.querySelector('.hud-bl'), this.root.querySelector('.hud-br'), this.heroPanel]) {
       const n = /** @type {HTMLElement|null} */ (el);
       if (!n || n.hidden || !n.offsetWidth) continue;
+      // Real on-screen box (the phone layout zooms these clusters), in stage coordinates.
+      const r = n.getBoundingClientRect();
+      const a = this.game.toStage(r.left, r.top);
+      const b = this.game.toStage(r.right, r.bottom);
       const pad = 12;
-      if (x > n.offsetLeft - pad && x < n.offsetLeft + n.offsetWidth + pad && y > n.offsetTop - pad && y < n.offsetTop + n.offsetHeight + 40) return true;
+      if (x > a.x - pad && x < b.x + pad && y > a.y - pad && y < b.y + 40) return true;
     }
     return false;
   }
@@ -592,7 +621,7 @@ export class Hud {
     if (!why && pl.slot < 0 && sim.treats < cost) why = `Need ${cost} 🐟`;
     const t = pl.slot >= 0 ? sim.towers[pl.slot] : null;
     const range = t ? sim.rangeOf(t) : def.tiers[0].range;
-    r.ghost = { cat: pl.cat, x, y, why, label: why || (pl.slot >= 0 ? 'Move here' : `${def.name} · ${cost} 🐟`), range, slot: pl.slot };
+    r.ghost = { cat: pl.cat, x, y, why, label: why || (pl.slot >= 0 ? 'Move here' : `${def.name} · ${cost} 🐟`) + (pl.touch && !pl.drag ? ' · tap again ✓' : ''), range, slot: pl.slot };
   }
 
   /** Try to seat / move the cat in hand at (x, y). @param {number} x @param {number} y @param {boolean} [keep] keep placing the same cat */
@@ -831,8 +860,10 @@ export class Hud {
 
   /** Place a menu element near a stage point, clamped inside the stage. @param {HTMLElement} el @param {number} x @param {number} y @param {number} w @param {number} hgt */
   place(el, x, y, w, hgt) {
-    const left = Math.max(10, Math.min(1920 - w - 10, x));
-    const top = Math.max(10, Math.min(1080 - hgt - 10, y));
+    // On phones the card is scaled up from its top-left corner, so clamp using its scaled size.
+    const z = this.game.hz || 1;
+    const left = Math.max(10, Math.min(1920 - w * z - 10, x));
+    const top = Math.max(10, Math.min(1080 - hgt * z - 10, y));
     el.style.left = left + 'px';
     el.style.top = top + 'px';
   }
@@ -887,7 +918,8 @@ export class Hud {
     });
     const W = 400;
     const H = 330;
-    this.place(card, t.x > 1200 ? t.x - W - 90 : t.x + 90, t.y - H / 2 - 40, W, H);
+    const z = this.game.hz || 1;
+    this.place(card, t.x > 1200 || (z > 1 && t.x > 960) ? t.x - W * z - 90 : t.x + 90, t.y - (H * z) / 2 - 40, W, H);
     this.menus.appendChild(card);
   }
 

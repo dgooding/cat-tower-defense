@@ -62,7 +62,10 @@ export class Coach {
     const s = STEPS[i];
     this.el.className = `coach at-${s.at}`;
     this.el.hidden = false;
-    /** @type {HTMLElement} */ (this.el.querySelector('.coach-text')).innerHTML = s.text;
+    // Touch screens: "tap" instead of "click", and no keyboard hints.
+    const touch = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+    const text = touch ? s.text.replace(/ ?\((?:or press )?<kbd>[^<]*<\/kbd>\)/g, '').replace(/\bClick\b/g, 'Tap').replace(/\bclick\b/g, 'tap') : s.text;
+    /** @type {HTMLElement} */ (this.el.querySelector('.coach-text')).innerHTML = text;
     this.game.renderer.hint = s.hint ? this.suggest(s.hint) : null;
   }
 
@@ -114,7 +117,10 @@ export class Coach {
     const n = this.el;
     if (n.hidden || !n.offsetWidth) return false;
     const pad = 40;
-    return x > n.offsetLeft - pad - 60 && x < n.offsetLeft + n.offsetWidth + pad + 60 && y > n.offsetTop - pad && y < n.offsetTop + n.offsetHeight + 130;
+    const r = n.getBoundingClientRect();
+    const a = this.game.toStage(r.left, r.top);
+    const b = this.game.toStage(r.right, r.bottom);
+    return x > a.x - pad - 60 && x < b.x + pad + 60 && y > a.y - pad && y < b.y + 130;
   }
 
   /**

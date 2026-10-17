@@ -7,6 +7,9 @@ import { toast, setSound, soundOn, clickMeow } from './ui.js';
 import { ACHIEVEMENT_BY_ID } from '../data/achievements.js';
 import { unlockAudio, setHidden, setVolume } from '../audio/sfx.js';
 import { music, setMusicVolume } from '../audio/music.js';
+import { registerOffline } from '../core/pwa.js';
+
+registerOffline();
 
 // ---------- debug overlay (?debug=1) ----------
 if (DEBUG) {

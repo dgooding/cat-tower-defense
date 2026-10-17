@@ -57,6 +57,31 @@ for (const page of PAGES) {
   }
 }
 
+// Service worker precache: every versioned module/stylesheet plus the pages and icons.
+{
+  const css = fs
+    .readdirSync(path.join(root, 'css'))
+    .filter((n) => n.endsWith('.css'))
+    .sort()
+    .map((n) => `./css/${n}?v=${hashOf(path.join(root, 'css', n))}`);
+  const js = modules.map((m) => `./${path.relative(root, m).split(path.sep).join('/')}?v=${hashOf(m)}`);
+  const statics = ['./', './index.html', './play.html', './interactive.html', './manifest.webmanifest', './favicon.svg', './icon-192.png', './icon-512.png'];
+  const list = [...statics, ...css, ...js];
+  const pagesHash = crypto.createHash('sha1');
+  for (const p of ['index.html', 'play.html', 'interactive.html', 'manifest.webmanifest']) pagesHash.update(fs.readFileSync(path.join(root, p), 'utf8').replace(/\r\n/g, '\n'));
+  const version = crypto.createHash('sha1').update(list.join('\n')).update(pagesHash.digest('hex')).digest('hex').slice(0, 10);
+  const swFile = path.join(root, 'sw.js');
+  const before = fs.readFileSync(swFile, 'utf8');
+  const block = `// @generated:start (node tools/stamp.mjs)\nconst VERSION = '${version}';\nconst PRECACHE = ${JSON.stringify(list, null, 2)};\n// @generated:end`;
+  const eol = before.includes('\r\n') ? '\r\n' : '\n';
+  const after = before.replace(/\/\/ @generated:start[\s\S]*?\/\/ @generated:end/, block.replace(/\n/g, eol));
+  if (after !== before) {
+    stale++;
+    if (check) console.log('out of date: sw.js');
+    else fs.writeFileSync(swFile, after);
+  }
+}
+
 if (check) {
   if (stale) {
     console.log(`${stale} page(s) need stamping: run node tools/stamp.mjs`);

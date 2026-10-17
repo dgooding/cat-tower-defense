@@ -2,6 +2,9 @@
 // Hub page: a single live Pudding who blinks, watches the cursor and reacts to clicks.
 import { CatRig } from './art/cats/catrig.js';
 import { pudding } from './art/cats/pudding.js';
+import { registerOffline } from './core/pwa.js';
+
+registerOffline();
 
 const canvas = /** @type {HTMLCanvasElement|null} */ (document.getElementById('hub-cat'));
 if (canvas) {
