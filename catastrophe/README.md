@@ -2,12 +2,15 @@
 
 A cozy, silly cat tower defense game. All art and sound are drawn/synthesized in code — no image or audio files, no build step, no dependencies.
 
-## Status: Round D0 — style test
+## Status: complete — Quick Play + Interactive Mode
+
+Live at <https://cat-tower-defense.com/catastrophe/>.
 
 | Page | What it is |
 |---|---|
-| `index.html` | Hub page with a live Pudding, the **▶ Play** button and the **✨ New Feature Page** button |
+| `index.html` | Hub page with a live Pudding and **▶ Play**, **🗺 Interactive Mode** and **✨ New Feature Page** buttons |
 | `play.html` | The game (Quick Play) |
+| `interactive.html` | Interactive Mode: storybook, world map, briefings, heroes, challenges, Cat-alog, Wardrobe, Cat-chievements, credits |
 | `gallery.html` | Design Gallery: review cats, enemies, bosses and rooms with 👍/✏️ + notes, then **📋 Copy all feedback** |
 | `dev/sheet.html` | Dev contact sheet of every expression and upgrade look |
 
@@ -61,19 +64,28 @@ Then open <http://localhost:5173/>.
 
 ## Publish
 
-Copy this whole `catastrophe/` folder into the repo your static host serves, commit, and push. All paths are relative, so it works at any URL (e.g. `https://your-domain/catastrophe/`).
+Copy this whole `catastrophe/` folder into the repo your static host serves, commit, and push. All paths are relative, so it works at any URL. It is published in `dgooding/cat-tower-defense` (branch `main`) at `/catastrophe/`; Porkbun Static Hosting deploys every push.
 
 ## Layout
 
 ```
-index.html · gallery.html · favicon.svg · jsconfig.json
-css/      tokens.css (design tokens) · gallery.css
-js/core/  rng.js (hash noise, seeded RNG)
-js/anim/  rig.js (springs, blink, twitch, look-at)
-js/art/   palette.js · brush.js (wobbly boiling ink) · props.js (nap cushion)
-js/art/cats/  catrig.js (shared cat rig + expressions) · pudding.js
-js/audio/ meow.js (synthesized meow)
+index.html · play.html · interactive.html · gallery.html · favicon.svg · jsconfig.json
+css/          tokens.css (design tokens) · game.css · interactive.css · gallery.css
+js/core/      rng.js (hash noise, seeded RNG) · spline.js
+js/anim/      rig.js (springs, blink, twitch, look-at)
+js/art/       registry.js (single source of truth) · palette.js · brush.js · props.js · hats.js · fallbacks.js
+js/art/cats/      catrig.js (shared cat rig + expressions) · 8 cats · 4 kittens
+js/art/enemies/   enemyrig.js · 20 enemies
+js/art/bosses/    4 bosses
+js/art/heroes/    3 heroes
+js/art/rooms/     common.js · countryside · house · bathhouse · sky
+js/audio/     meow.js · sfx.js (Web Audio synth)
+js/data/      ids, cats, enemies, levels, waves, quips, moods, heroes, achievements, layout
+js/sim/       sim.js · extras.js · geometry.js · autobot.js (pure, deterministic)
+js/game/      game.js · renderer.js · fx.js · icons.js
+js/ui/        main, screens, hud, settings, save, stats, bosskey, debug
+js/interactive/   main, store, stage, ui, routes/, story/, tools/
 js/gallery/   gallery.js · concepts.js · feedback.js
-dev/      sheet.html
-tools/    serve.mjs
+dev/          sheet.html
+tools/        serve.mjs · bot.mjs · leaks.mjs · tests/
 ```
