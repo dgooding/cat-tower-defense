@@ -3,16 +3,18 @@
 // Everything is stored in progress.settings and applied live.
 import { loadProgress, saveProgress, clearRun } from './save.js';
 import { setVolume, getVolume, setMuted, isMuted } from '../audio/sfx.js';
+import { setMusicVolume, getMusicVolume } from '../audio/music.js';
 
 const OS_REDUCED = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/** @typedef {{reducedMotion?: boolean, shake?: boolean, colorblind?: boolean, volume?: number}} Settings */
+/** @typedef {{reducedMotion?: boolean, shake?: boolean, colorblind?: boolean, volume?: number, music?: number}} Settings */
 
 /** Effective settings (user choices layered over the OS reduced-motion preference). */
 export function currentSettings() {
   const s = loadProgress().settings ?? {};
   return {
     volume: typeof s.volume === 'number' ? s.volume : 0.4,
+    music: typeof s.music === 'number' ? s.music : 0.5,
     reducedMotion: !!s.reducedMotion || OS_REDUCED,
     userReduced: !!s.reducedMotion,
     shake: s.shake !== false,
@@ -27,6 +29,7 @@ export function currentSettings() {
 export function applySettings(game) {
   const s = currentSettings();
   setVolume(s.volume);
+  setMusicVolume(s.music);
   game.renderer.applySettings({ reducedMotion: s.reducedMotion, shake: s.shake, colorblind: s.colorblind });
   document.body.classList.toggle('reduced', s.reducedMotion);
   document.body.classList.toggle('colorblind', s.colorblind);
@@ -52,6 +55,7 @@ export function openSettings(host, game, onClose) {
   wrap.innerHTML = `<div class="panel settings" role="dialog" aria-modal="true" aria-labelledby="set-title"><span class="tape"></span>
     <h2 id="set-title">⚙ Settings</h2>
     <label class="set-row"><span>🔊 Volume</span><input type="range" min="0" max="100" step="5" value="${Math.round(getVolume() * 100)}" data-k="volume" aria-label="Volume"></label>
+    <label class="set-row"><span>🎵 Music</span><input type="range" min="0" max="100" step="5" value="${Math.round(getMusicVolume() * 100)}" data-k="music" aria-label="Music volume"></label>
     <label class="set-row"><span>🔇 Mute</span><input type="checkbox" data-k="mute" ${isMuted() ? 'checked' : ''}></label>
     <label class="set-row"><span>🐢 Reduced motion${OS_REDUCED ? ' (on in your system)' : ''}</span><input type="checkbox" data-k="reducedMotion" ${s.userReduced || OS_REDUCED ? 'checked' : ''} ${OS_REDUCED ? 'disabled' : ''}></label>
     <label class="set-row"><span>📳 Screen shake</span><input type="checkbox" data-k="shake" ${s.shake ? 'checked' : ''}></label>
@@ -64,15 +68,15 @@ export function openSettings(host, game, onClose) {
   wrap.addEventListener('input', (e) => {
     const el = /** @type {HTMLInputElement} */ (e.target);
     const k = el.dataset.k;
-    if (k === 'volume') {
-      save({ volume: Number(el.value) / 100 });
+    if (k === 'volume' || k === 'music') {
+      save({ [k]: Number(el.value) / 100 });
       applySettings(game);
     }
   });
   wrap.addEventListener('change', (e) => {
     const el = /** @type {HTMLInputElement} */ (e.target);
     const k = el.dataset.k;
-    if (!k || k === 'volume') return;
+    if (!k || k === 'volume' || k === 'music') return;
     if (k === 'mute') {
       setMuted(el.checked);
       window.dispatchEvent(new CustomEvent('cata:mute'));

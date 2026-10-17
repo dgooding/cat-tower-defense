@@ -13,6 +13,7 @@ import { LEVELS, LEVEL_BY_ID, endlessLevel } from '../data/levels.js';
 import { HEROES } from '../data/heroes.js';
 import { ACHIEVEMENT_BY_ID } from '../data/achievements.js';
 import { setMuted, isMuted, setHidden, unlockAudio } from '../audio/sfx.js';
+import { installMusic, musicState } from '../audio/music.js';
 import { installDebug } from './debug.js';
 
 const params = new URLSearchParams(location.search);
@@ -51,6 +52,7 @@ const game = new Game({
   },
 });
 applySettings(game);
+if (!AUTOPLAY) installMusic(game);
 
 const tally = new Tally(game, { enabled: () => !AUTOPLAY });
 
@@ -289,6 +291,6 @@ window.addEventListener('pagehide', () => tally.flush());
 
 if (DEBUG) {
   installDebug(game);
-  /** @type {any} */ (window).__cata = { game, hud, tally };
+  /** @type {any} */ (window).__cata = { game, hud, tally, music: musicState };
 }
 route();

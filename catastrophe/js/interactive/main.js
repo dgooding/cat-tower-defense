@@ -5,6 +5,8 @@ import { progress, onChange, pawPrints, DEBUG, DEMO, isSeen, setCalm, reducedMot
 import { clearViews, isCalm } from './stage.js';
 import { toast, setSound, soundOn, clickMeow } from './ui.js';
 import { ACHIEVEMENT_BY_ID } from '../data/achievements.js';
+import { unlockAudio, setHidden, setVolume } from '../audio/sfx.js';
+import { music, setMusicVolume } from '../audio/music.js';
 
 // ---------- debug overlay (?debug=1) ----------
 if (DEBUG) {
@@ -194,13 +196,21 @@ function syncSound() {
   const on = soundOn();
   soundBtn.textContent = on ? '🔊' : '🔇';
   soundBtn.setAttribute('aria-pressed', String(on));
-  soundBtn.setAttribute('aria-label', on ? 'Click meows on' : 'Click meows off');
+  soundBtn.setAttribute('aria-label', on ? 'Sound on: click meows and music' : 'Sound off');
+  // The lullaby only plays after the player opts in (office-safe: never autoplays).
+  const s = progress().settings ?? {};
+  setVolume(typeof s.volume === 'number' ? s.volume : 0.4);
+  setMusicVolume(typeof s.music === 'number' ? s.music : 0.5);
+  music(on ? 'title' : null);
 }
 soundBtn.addEventListener('click', () => {
   setSound(!soundOn());
+  if (soundOn()) unlockAudio();
   syncSound();
   clickMeow(1);
 });
+document.addEventListener('pointerdown', () => soundOn() && unlockAudio(), true);
+document.addEventListener('visibilitychange', () => setHidden(document.hidden));
 syncSound();
 onChange(syncHeader);
 syncHeader();

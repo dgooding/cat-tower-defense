@@ -33,6 +33,14 @@ function ctx() {
   return ac;
 }
 
+/** Shared context + master bus for other audio modules (music). Null until a user gesture has created it. */
+export function audioOut() {
+  return ac && master ? { ac, master } : null;
+}
+
+/** True while nothing should be heard (user mute, tab hidden, Boss Key). */
+export const isSilent = () => muted || hidden;
+
 /** Call from a user gesture so the browser lets us make sound. */
 export function unlockAudio() {
   const a = ctx();

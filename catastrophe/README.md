@@ -8,7 +8,7 @@ Live at <https://cat-tower-defense.com/catastrophe/>.
 
 | Page | What it is |
 |---|---|
-| `index.html` | Hub page with a live Pudding and **▶ Play**, **🗺 Interactive Mode** and **✨ New Feature Page** buttons |
+| `index.html` | Hub page with a live Pudding, an upper-right **KatNip** quick-play button, **▶ Play**, **🗺 Interactive Mode** and **✨ New Feature Page** buttons |
 | `play.html` | The game (Quick Play) |
 | `interactive.html` | Interactive Mode: storybook, world map, briefings, heroes, challenges, Cat-alog, Wardrobe, Cat-chievements, credits |
 | `gallery.html` | Design Gallery: review cats, enemies, bosses and rooms with 👍/✏️ + notes, then **📋 Copy all feedback** |
@@ -39,12 +39,14 @@ Progress lives in `localStorage` (`cata:save:v1`); an in-progress run autosaves 
 
 **Interactive Mode hooks** (used by `interactive.html`): `play.html?mode=interactive&hero=<ronin-biscuit|nebula|big-tom>&challenge=<iron|nap>#/play/1-1`. The hero spawns near the stash. Click it (or press `H`), then click the ground to walk there. It auto-attacks; `Z`/`X` (or the HUD buttons) use its abilities. It levels up to 10 and naps for 15 s when downed. Iron Cat = 1 snack and no Cat Powers; Nap Time = at most 4 cats. Results then offer **🗺 Back to Map** and record challenge stars. Equipped Wardrobe hats are worn by tower cats and the hero. Achievement counters are batched and flushed at wave and level boundaries; unlocks show a 🏆 toast.
 
-**Settings** (title ⚙ button, pause menu, or `#/settings`): volume, mute, reduced motion, screen shake, colorblind status icons, reset progress.
+**Settings** (title ⚙ button, pause menu, or `#/settings`): volume, music volume, mute, reduced motion, screen shake, colorblind status icons, reset progress.
+
+**Music** is composed in code too (`js/audio/songs.js` is the score, `js/audio/music.js` plays it): a music-box lullaby on menus, a theme per world (porch guitar, kotatsu lounge, bathhouse koto, sky waltz) and a villain theme whenever a boss is on the field. Drums and arpeggios fade in during waves and out between them; pausing ducks the music. It is silent until the first click, stays under the sound effects, and goes quiet with mute, a hidden tab or the Boss Key. In Interactive Mode it only plays after you turn sound on (🔇 button). With `?debug=1`, `__cata.music()` shows what's playing.
 
 **Checks (Node only, no installs):**
 
 ```
-node --test tools/tests     # simulation unit tests
+node --test tools/tests     # simulation + score unit tests
 node tools/bot.mjs          # headless greedy bot plays all 12 levels (+ a zero-cat run)
 node tools/bot.mjs --hero=all            # …again with each hero
 node tools/bot.mjs --challenge=nap 1-1   # challenges
@@ -52,7 +54,7 @@ node tools/bot.mjs --free                # bot picks its own best spots anywhere
 node tools/stamp.mjs --check             # cache-busting stamps up to date (run without --check before publishing)
 ```
 
-Gameplay code: `js/sim/` (pure deterministic 60 Hz simulation, no DOM: sim.js, extras.js for gimmicks/moods/hero, geometry.js, autobot.js) · `js/data/` (ids, cats, enemies, levels, waves, quips, layout lookup) · `js/game/` (game loop, Canvas2D renderer, sprite-cached rigs, effects, HUD icons) · `js/ui/` (routes, title/grid, HUD/menus/overlays, Boss Key, saves, debug) · `js/audio/sfx.js` (tiny Web Audio synth). Level geometry is read at runtime from `ROOM_ART[world].room.layouts[i]`.
+Gameplay code: `js/sim/` (pure deterministic 60 Hz simulation, no DOM: sim.js, extras.js for gimmicks/moods/hero, geometry.js, autobot.js) · `js/data/` (ids, cats, enemies, levels, waves, quips, layout lookup) · `js/game/` (game loop, Canvas2D renderer, sprite-cached rigs, effects, HUD icons) · `js/ui/` (routes, title/grid, HUD/menus/overlays, Boss Key, saves, debug) · `js/audio/` (sfx.js tiny Web Audio synth, music.js + songs.js procedural score). Level geometry is read at runtime from `ROOM_ART[world].room.layouts[i]`.
 
 ## Preview locally
 
@@ -81,7 +83,7 @@ js/art/enemies/   enemyrig.js · 20 enemies
 js/art/bosses/    4 bosses
 js/art/heroes/    3 heroes
 js/art/rooms/     common.js · countryside · house · bathhouse · sky
-js/audio/     meow.js · sfx.js (Web Audio synth)
+js/audio/     meow.js · sfx.js (Web Audio synth) · songs.js (the score) · music.js (score player + director)
 js/data/      ids, cats, enemies, levels, waves, quips, moods, heroes, achievements, layout
 js/sim/       sim.js · extras.js · geometry.js · autobot.js (pure, deterministic)
 js/game/      game.js · renderer.js · fx.js · icons.js

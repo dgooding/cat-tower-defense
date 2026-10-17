@@ -373,6 +373,14 @@ dialog textarea {
 }
 
 /* Hub page */
+.katnip-link {
+  position: fixed;
+  top: 20px;
+  right: 24px;
+  z-index: 110;
+  font-size: 18px;
+  padding: 12px 20px;
+}
 .hub {
   min-height: 100vh;
   display: grid;
@@ -412,8 +420,16 @@ dialog textarea {
   font-size: 14px;
   margin-top: 16px;
 }
+@media (max-width: 480px) {
+  .katnip-link {
+    top: 12px;
+    right: 12px;
+    font-size: 16px;
+    padding: 10px 16px;
+  }
+}
 
-/* ---- registry-driven gallery (D1–D3) ---- */
+/* ---- registry-driven gallery (D1ï¿½D3) ---- */
 .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 0 0 8px; }
 .toolbar h4 { margin: 0; }
 .grid.wide { grid-template-columns: repeat(auto-fill, minmax(min(100%, 560px), 1fr)); }

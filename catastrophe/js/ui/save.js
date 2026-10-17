@@ -18,7 +18,7 @@ const CONTENT_VERSION = 1;
  * @property {Record<string, number>} achievements achievement id → unlock timestamp (ms)
  * @property {Record<string, number>} counters lifetime counters that drive achievements (see js/data/achievements.js)
  * @property {Record<string, boolean>} seen story/catalog flags, e.g. "story:prologue", "catalog:vroomba"
- * @property {{reducedMotion?: boolean, shake?: boolean, colorblind?: boolean, volume?: number}} settings
+ * @property {{reducedMotion?: boolean, shake?: boolean, colorblind?: boolean, volume?: number, music?: number}} settings
  */
 
 /** @returns {Progress} */
