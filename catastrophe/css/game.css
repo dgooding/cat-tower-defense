@@ -357,6 +357,16 @@ body:not([data-screen='level']) #game {
   top: 32px;
   font: 700 30px var(--font-display);
 }
+.endless-row .lvl + .lvl {
+  margin-top: 18px;
+}
+.lvl.halloween {
+  background: repeating-linear-gradient(45deg, #4a3b5c 0 30px, #5e4a78 30px 60px, #f28c28 60px 90px, #5e4a78 90px 120px);
+}
+.lvl.halloween .lvl-best {
+  color: #fff4cf;
+  text-shadow: 0 2px 0 #3b3a4a;
+}
 
 /* ───────────── HUD ───────────── */
 #hud {

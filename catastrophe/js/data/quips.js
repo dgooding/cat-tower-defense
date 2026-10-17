@@ -38,6 +38,7 @@ export const QUIPS = {
   thunderclap: ['BOOM.', 'Rumble rumble.', 'Forecast: grumpy.'],
   'overdue-bill': ['Final notice!', 'Thought you could ignore me?', 'Payment due upon receipt.'],
   'good-boy': ['FRIEND? FRIEND!! FRIEND!!!', 'Ball? BALL!', 'Who is a good boy? ME!', 'Belly rubs, please.'],
+  'cucumber-ghost': ['Boo? …Boo!', 'I am definitely a real ghost.', 'Trick or treat! Mostly treat.', 'This sheet was in the dryer.'],
   // Bosses
   cucumberto: ['I vant to… be a pickle.', 'Brine for centuries!', 'Into ze jar!', 'Bleh. Bleh!'],
   sucktator: ['ALL WILL BE TIDY.', 'SUCK MODE: ENGAGED.', 'Do not touch my cord.', 'OVERHEATING. OH NO.'],

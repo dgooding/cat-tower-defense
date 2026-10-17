@@ -11,7 +11,8 @@ export const KITTEN_IDS = ['beans', 'biscuit', 'noodle', 'tofu'];
 export const ENEMY_IDS = [
   'cucumber-cadet', 'sneaky-pickle', 'vroomba', 'empty-bowl', 'spritz', 'cone-of-shame', 'rubber-duckie', 'tubby-mcsoak', 'snip-snap', 'party-pooper',
   'monday', 'closed-door', 'fancy-bed', 'lint-roller', 'carrier', 'hose-snek', 'umbrella-uncles', 'thunderclap', 'overdue-bill', 'good-boy',
-];
+    'cucumber-ghost',
+  ];
 export const BOSS_IDS = ['cucumberto', 'sucktator', 'bathzilla', 'great-bowl'];
 export const ROOM_IDS = ['countryside', 'house', 'bathhouse', 'sky'];
 export const HERO_IDS = ['ronin-biscuit', 'nebula', 'big-tom'];

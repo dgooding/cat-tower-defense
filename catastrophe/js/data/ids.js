@@ -27,6 +27,7 @@ export const ENEMY_IDS = /** @type {const} */ ([
   'thunderclap',
   'overdue-bill',
   'good-boy',
+  'cucumber-ghost',
 ]);
 
 export const BOSS_IDS = /** @type {const} */ (['cucumberto', 'sucktator', 'bathzilla', 'great-bowl']);

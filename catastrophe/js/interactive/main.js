@@ -8,6 +8,7 @@ import { ACHIEVEMENT_BY_ID } from '../data/achievements.js';
 import { unlockAudio, setHidden, setVolume } from '../audio/sfx.js';
 import { music, setMusicVolume } from '../audio/music.js';
 import { registerOffline } from '../core/pwa.js';
+import { isHalloween } from '../core/season.js';
 
 registerOffline();
 
@@ -200,11 +201,11 @@ function syncSound() {
   soundBtn.textContent = on ? '🔊' : '🔇';
   soundBtn.setAttribute('aria-pressed', String(on));
   soundBtn.setAttribute('aria-label', on ? 'Sound on: click meows and music' : 'Sound off');
-  // The lullaby only plays after the player opts in (office-safe: never autoplays).
+  // Interactive Mode lullaby (spooky in October); only after the player opts in.
   const s = progress().settings ?? {};
   setVolume(typeof s.volume === 'number' ? s.volume : 0.4);
   setMusicVolume(typeof s.music === 'number' ? s.music : 0.5);
-  music(on ? 'title' : null);
+  music(on ? (isHalloween() ? 'spooky' : 'title') : null);
 }
 soundBtn.addEventListener('click', () => {
   setSound(!soundOn());

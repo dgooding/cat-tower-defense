@@ -48,7 +48,9 @@ export const ENEMIES = [
   { id: 'thunderclap', name: 'Thunderclap', icon: '⛈️', hp: 150, speed: 0.85, shine: 0.2, bounty: 18, snacks: 1, flier: true, boom: { every: 8, range: 200, hide: 0.7 }, blurb: 'Flier. BOOM makes cats hide.' },
   { id: 'overdue-bill', name: 'Overdue Bill', icon: '✉️', hp: 100, speed: 1.2, bounty: 15, snacks: 0, stealsTreats: 0.1, blurb: 'Steals 10% of your treats if it gets through.' },
   { id: 'good-boy', name: 'Good Boy', icon: '🐕', hp: 800, speed: 0.7, bounty: 50, snacks: 1, atk: 0, size: 30, friendly: true, blurb: 'Pet him enough and he flops over and pays you.' },
-];
+    // Seasonal (The Haunted Hayride only; never in the 12 normal levels).
+    { id: 'cucumber-ghost', name: 'Cucumber in a Sheet', icon: '👻', hp: 60, speed: 1.0, bounty: 8, snacks: 1, stealth: true, blurb: 'Stealth. A cucumber in a bedsheet. Boo? Startles cats when revealed.' },
+  ];
 
 /** @type {EnemyDef[]} */
 export const BOSSES = [

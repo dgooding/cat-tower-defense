@@ -53,7 +53,8 @@ export const ENEMIES = [
   { id: 'thunderclap', name: 'Thunderclap', icon: '⛈️', role: 'Flier, scares cats into hiding', look: 'Grumpy storm cloud with a zigzag mouth.', bio: 'BOOM. That is all it says.', quip: 'BOOM.', round: 'D2' },
   { id: 'overdue-bill', name: 'Overdue Bill', icon: '✉️', role: 'Steals treats if it gets through', look: 'Red envelope with a FINAL NOTICE stamp, tiny briefcase.', bio: 'Thought you could ignore it?', quip: 'Final notice!', round: 'D2' },
   { id: 'good-boy', name: 'Good Boy', icon: '🐕', role: 'Friendly: flops for belly rubs instead of losing', look: 'Fluffy golden retriever with a tennis ball and pure joy.', bio: 'Just wants to play. The cats are profoundly annoyed.', quip: 'FRIEND? FRIEND!! FRIEND!!!', round: 'D2' },
-];
+    { id: 'cucumber-ghost', name: 'Cucumber in a Sheet', icon: '👻', role: 'Seasonal stealth (The Haunted Hayride)', look: 'A cucumber under a bedsheet with lopsided eye holes, floating, holding a tiny pumpkin pail.', bio: 'Raided the linen closet for Halloween. Nobody has the heart to tell it.', quip: 'Boo? …Boo!', round: 'D2' },
+  ];
 
 /** @type {Concept[]} */
 export const BOSSES = [

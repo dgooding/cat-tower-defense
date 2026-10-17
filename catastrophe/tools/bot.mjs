@@ -1,9 +1,9 @@
 // Headless balance bot: plays every level with a greedy builder (and once with zero cats).
-// Usage: node tools/bot.mjs [levelId…] [--hero=<heroId>|--hero=all] [--challenge=iron|nap] [--free] [--strict]
+// Usage: node tools/bot.mjs [levelId|halloween…] [--hero=<heroId>|--hero=all] [--challenge=iron|nap] [--free] [--strict]
 //   e.g. node tools/bot.mjs 1-1 1-2      node tools/bot.mjs --hero=nebula      node tools/bot.mjs --hero=all
 //   --free: the bot picks its own best-coverage spots anywhere (free placement, like a sharp human)
 //   --strict: fail (exit 1) if any level is not won (used by CI for normal play)
-import { LEVELS, LEVEL_BY_ID } from '../js/data/levels.js';
+import { LEVELS, LEVEL_BY_ID, halloweenLevel } from '../js/data/levels.js';
 import { HEROES } from '../js/data/heroes.js';
 import { getLayout } from '../js/data/layout.js';
 import { Sim } from '../js/sim/sim.js';
@@ -28,7 +28,8 @@ export function runLevel(level, o = {}) {
 const args = process.argv.slice(2);
 const flag = (name) => args.find((a) => a.startsWith(`--${name}=`))?.split('=')[1] ?? null;
 const ids = args.filter((a) => !a.startsWith('--'));
-const levels = ids.length ? ids.map((a) => LEVEL_BY_ID[a]).filter(Boolean) : LEVELS;
+const byId = (/** @type {string} */ a) => LEVEL_BY_ID[a] ?? (a === 'halloween' ? halloweenLevel() : undefined);
+const levels = ids.length ? ids.map(byId).filter(Boolean) : LEVELS;
 const heroArg = flag('hero');
 const heroes = heroArg === 'all' ? [null, ...Object.keys(HEROES)] : [heroArg];
 const challenge = /** @type {any} */ (flag('challenge'));

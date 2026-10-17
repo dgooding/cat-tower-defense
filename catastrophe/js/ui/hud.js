@@ -156,7 +156,7 @@ export class Hud {
     const sim = this.sim;
     const lvl = this.game.level;
     if (!sim || !lvl) return;
-    this.v.name.textContent = lvl.id === 'endless' ? `∞ ${lvl.name}` : `${lvl.id} · ${lvl.name}`;
+    this.v.name.textContent = lvl.id === 'endless' ? `∞ ${lvl.name}` : lvl.id === 'halloween' ? `🎃 ${lvl.name}` : `${lvl.id} · ${lvl.name}`;
     this.refreshPreview();
     // Challenge + hero setup.
     const chal = sim.challenge;

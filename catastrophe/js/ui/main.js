@@ -8,8 +8,9 @@ import { renderTitle, renderGrid } from './screens.js';
 import { installBossKey } from './bosskey.js';
 import { openSettings, applySettings, currentSettings } from './settings.js';
 import { Tally } from './stats.js';
-import { loadProgress, saveProgress, recordStars, recordChallenge, bump, isUnlocked, endlessUnlocked, saveRun, loadRun, clearRun } from './save.js';
-import { LEVELS, LEVEL_BY_ID, endlessLevel } from '../data/levels.js';
+import { loadProgress, saveProgress, recordStars, recordChallenge, bump, isUnlocked, endlessUnlocked, saveRun, loadRun, clearRun, markSeen } from './save.js';
+import { LEVELS, LEVEL_BY_ID, endlessLevel, halloweenLevel } from '../data/levels.js';
+import { isHalloween } from '../core/season.js';
 import { HEROES } from '../data/heroes.js';
 import { ACHIEVEMENT_BY_ID } from '../data/achievements.js';
 import { setMuted, isMuted, setHidden, unlockAudio } from '../audio/sfx.js';
@@ -91,6 +92,11 @@ const hud = new Hud(game, ui, {
       saveProgress(p);
       tally.levelEnd({ won: false, lives: sim.lives, maxLives: sim.maxLives, challenge: null, hero: null, endlessWaves: waves });
       r = { won: false, stars: 0, endless: { waves, best: p.endlessBest, newBest } };
+    } else if (level.id === 'halloween') {
+      // Seasonal bonus: no stars (they would mint paw prints); just remember that it was cleared.
+      if (won && !AUTOPLAY) markSeen('halloween:won');
+      tally.levelEnd({ won, lives: sim.lives, maxLives: sim.maxLives, challenge: sim.challenge, hero: sim.hero?.id ?? null });
+      r = { won, stars: sim.stars, nextId: null, challenge: sim.challenge, hero: sim.hero?.id ?? null };
     } else {
       if (won && !AUTOPLAY) {
         recordStars(level.id, sim.stars);
@@ -98,7 +104,7 @@ const hud = new Hud(game, ui, {
       }
       tally.levelEnd({ won, lives: sim.lives, maxLives: sim.maxLives, challenge: sim.challenge, hero: sim.hero?.id ?? null });
       const i = LEVELS.findIndex((l) => l.id === level.id);
-      r = { won, stars: sim.stars, nextId: LEVELS[i + 1]?.id ?? null, challenge: sim.challenge, hero: sim.hero?.id ?? null };
+      r = { won, stars: sim.stars, nextId: i >= 0 ? LEVELS[i + 1]?.id ?? null : null, challenge: sim.challenge, hero: sim.hero?.id ?? null };
     }
     setTimeout(() => {
       if (game.level === level) hud.showResults(r);
@@ -172,7 +178,8 @@ function startLevel(id, fresh = false) {
       snap = null;
     }
     level = endlessLevel(endlessRun);
-  } else level = LEVEL_BY_ID[id];
+  } else if (id === 'halloween') level = halloweenLevel();
+  else level = LEVEL_BY_ID[id];
   if (AUTOPLAY) snap = null;
   const opts = { hero: id === 'endless' ? null : HERO, challenge: id === 'endless' ? null : CHALLENGE, hats: loadProgress().hats?.equipped ?? {} };
   try {
@@ -239,6 +246,15 @@ function route() {
       return;
     }
     startLevel('endless');
+    return;
+  }
+  if (id === 'halloween') {
+    if (!isHalloween() && !AUTOPLAY && !DEBUG) {
+      location.hash = '#/play';
+      setTimeout(() => hud.toast('🎃 The Haunted Hayride only runs in October. See you then!'), 50);
+      return;
+    }
+    startLevel('halloween');
     return;
   }
   if (id && LEVEL_BY_ID[id]) {

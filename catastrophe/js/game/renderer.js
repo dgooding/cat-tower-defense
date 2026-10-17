@@ -8,6 +8,8 @@ import { drawRoom, drawStash, drawSeat, STAGE_W, STAGE_H } from '../art/rooms/co
 import { TIER_LABELS } from '../data/cats.js';
 import { quip } from '../data/quips.js';
 import { Fx, drawText } from './fx.js';
+import { costumeFor } from '../art/costumes.js';
+import { pickLanterns, drawNightWash, drawLanterns, drawBats } from './spooky.js';
 
 const CAT_PX = 76;
 /** Per-frame rig-sprite repaint budget (ms of JS time), tuned at runtime between these bounds. */
@@ -114,6 +116,10 @@ export class Renderer {
     this.baseDt = 1000 / 60;
     /** Wardrobe: catId|heroId → hatId. @type {Record<string, string>} */
     this.hats = {};
+    /** Halloween costumes replace Wardrobe hats (Haunted Hayride, October title diorama). */
+    this.costumes = false;
+    /** Haunted Hayride night mood: jack-o'-lantern spots, or null when off. @type {import('./spooky.js').Lantern[]|null} */
+    this.spooky = null;
     /** @type {{rig: CatRig, scale:number, pokeT:number, sprite?: any, id:string, name:string}|null} */
     this.heroView = null;
     this.heroSelected = false;
@@ -133,16 +139,20 @@ export class Renderer {
 
   /** Wardrobe hat accessory for a cat/hero id, if one is equipped. @param {string} id */
   hatFor(id) {
+    if (this.costumes) return costumeFor(id);
     const hat = HATS?.[this.hats[id]];
     return hat ? [{ layer: 'head', hat: true, draw: hat.draw }] : [];
   }
 
   /**
    * @param {Sim} sim @param {import('../art/rooms/common.js').RoomSpec} room @param {import('../art/rooms/common.js').Layout} layout
-   * @param {{hats?: Record<string, string>}} [o]
+   * @param {{hats?: Record<string, string>, costumes?: boolean}} [o] costumes: everyone wears a Halloween costume
    */
   setScene(sim, room, layout, o = {}) {
     this.hats = o.hats ?? {};
+    const haunted = sim.level?.id === 'halloween';
+    this.costumes = !!o.costumes || haunted;
+    this.spooky = haunted ? pickLanterns(sim.tracks, layout) : null;
     this.heroView = null;
     this.heroSelected = false;
     this.screensWarn = -1;
@@ -554,7 +564,9 @@ export class Renderer {
     for (const k of sim.kittens) {
       if (!this.kits.has(k.id)) {
         const art = KITTEN_ART[k.name] ?? KITTEN_ART.beans;
-        this.kits.set(k.id, { rig: new CatRig(art.spec, k.id * 17 + 3), scale: (CAT_PX / 250) * (art.spec.scale ?? 0.55), pokeT: -9 });
+        const krig = new CatRig(art.spec, k.id * 17 + 3);
+        if (this.costumes) krig.extra = costumeFor(k.name);
+        this.kits.set(k.id, { rig: krig, scale: (CAT_PX / 250) * (art.spec.scale ?? 0.55), pokeT: -9 });
       }
     }
     if (this.kits.size > sim.kittens.length) {
@@ -827,6 +839,10 @@ export class Renderer {
       this.roomCost += performance.now() - t0;
     }
     this.stageTransform(ctx);
+    if (this.spooky) {
+      drawNightWash(ctx);
+      drawLanterns(ctx, this.spooky, this.time, this.reduced);
+    }
     const st = this.layout.stash;
     try {
       drawStash(this.pen, st.x, st.y, this.time, 3, 1 - sim.lives / sim.maxLives);
@@ -889,6 +905,7 @@ export class Renderer {
       }
     }
 
+    if (this.spooky) drawBats(ctx, this.time, this.reduced);
     if (sim.dark > 0) {
       ctx.fillStyle = 'rgba(20,18,60,0.32)';
       ctx.fillRect(0, 0, STAGE_W, STAGE_H);

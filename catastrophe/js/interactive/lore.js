@@ -42,6 +42,7 @@ export const COUNTER_TIPS = {
   thunderclap: 'A flier that spooks cats. Whiskerton’s laser reaches up and says hello.',
   'overdue-bill': 'Fast. Slow it down with yarn before the due date.',
   'good-boy': 'Don’t fight him. Pet him. Any cat will do; he just wants attention.',
+  'cucumber-ghost': 'A Halloween special. Like the Sneaky Pickle: Maneki Mochi spots it without the jump scare.',
   cucumberto: 'Slow him with yarn, then bonk with everything. Watch out for the jar.',
   sucktator: 'It inhales lobs and kittens. Lasers and hisses can’t be sucked up.',
   bathzilla: 'Bring Wet-immunity and something for the duck armada. Then pull the plug.',

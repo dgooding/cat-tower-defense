@@ -7,6 +7,7 @@ import { Pen } from '../art/brush.js';
 import { TIPS } from '../data/quips.js';
 import { loadProgress, isUnlocked, endlessUnlocked } from './save.js';
 import { isMuted } from '../audio/sfx.js';
+import { isHalloween } from '../core/season.js';
 
 const WORLD_ICONS = { countryside: '🌾', house: '🍵', bathhouse: '🏮', sky: '🌙' };
 
@@ -83,6 +84,13 @@ export function renderGrid(host) {
     <span class="lvl-id">∞ Endless</span><span class="lvl-name">The Infinite Laundry Basket</span>
     <span class="lvl-best">Best: ${p.endlessBest} waves</span>${eOpen ? '' : '<span class="lock">🔒</span>'}</${eOpen ? 'a' : 'button'}>`);
   /** @type {HTMLElement} */ (el.querySelector('.endless-row')).appendChild(endless);
+  if (isHalloween()) {
+    const cleared = !!p.seen?.['halloween:won'];
+    const spooky = h(`<a class="lvl endless halloween" href="#/play/halloween" aria-label="Seasonal bonus level: The Haunted Hayride${cleared ? ', cleared' : ''}">
+      <span class="lvl-id">🎃 Bonus</span><span class="lvl-name">The Haunted Hayride</span>
+      <span class="lvl-best">${cleared ? '👻 Cleared!' : 'October only'}</span></a>`);
+    /** @type {HTMLElement} */ (el.querySelector('.endless-row')).prepend(spooky);
+  }
   host.replaceChildren(el);
   // Paint thumbnails progressively so the grid appears instantly.
   let k = 0;

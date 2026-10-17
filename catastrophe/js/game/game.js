@@ -8,6 +8,7 @@ import { LEVEL_BY_ID } from '../data/levels.js';
 import { CAT_IDS } from '../data/ids.js';
 import { STAGE_W, STAGE_H } from '../art/rooms/common.js';
 import { sfx } from '../audio/sfx.js';
+import { isHalloween } from '../core/season.js';
 
 /** @typedef {import('../data/levels.js').LevelDef} LevelDef */
 
@@ -109,7 +110,7 @@ export class Game {
     sim.autoStartIn = null;
     this.sim = sim;
     this.level = level;
-    this.renderer.setScene(sim, getRoom(base), layout);
+    this.renderer.setScene(sim, getRoom(base), layout, { costumes: isHalloween() });
     this.bot = null;
     this.mode = 'diorama';
     this.paused = false;

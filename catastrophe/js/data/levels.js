@@ -1,7 +1,7 @@
 // @ts-check
 // 12 levels = 4 worlds × 3. Geometry is NOT copied here: each level points at
 // ROOM_ART[world].room.layouts[layout] and the game reads paths/spots/stash at runtime.
-import { WAVES } from './waves.js';
+import { WAVES, parseWave } from './waves.js';
 
 /**
  * @typedef {Object} LevelDef
@@ -15,6 +15,7 @@ import { WAVES } from './waves.js';
  * @property {string[]} intro enemy ids introduced here (for the "New threat" note)
  * @property {number} seed
  * @property {Gimmick} [gimmick] level-specific mechanic (Part 6)
+ * @property {string} [song] music id from js/audio/songs.js to play instead of the world's song (e.g. 'spooky')
  */
 /**
  * @typedef {{kind:'screens', every:number, note:string}
@@ -110,5 +111,44 @@ export function endlessLevel(run) {
     boss: null,
     intro: [],
     seed: 9000 + run * 13,
+  };
+}
+
+/** Wave scripts for The Haunted Hayride (kept out of WAVES so the 12-level tables stay as they are). */
+export const HALLOWEEN_WAVES = [
+  'C8/1.2',
+  'cucumber-ghost4/1.6 C6/1.1@3',
+  'C10/1 D12/.4@6',
+  'cucumber-ghost8/1.1 P3/1.6@5',
+  'D24/.3 cucumber-ghost5/1.2@5 G1@8',
+  'C14/.8 P5/1.3@4 cucumber-ghost6/1@9',
+  'H1 cucumber-ghost10/.9@3 D14/.35@9',
+  'G1 C14/.7@2 cucumber-ghost8/.9@8',
+  'P8/1 cucumber-ghost12/.75@4 D20/.3@11',
+  'C20/.55 cucumber-ghost14/.7@4 H2/5@8',
+  'D30/.25 cucumber-ghost10/.8@4 G1@10',
+  'cucumberto1:0 C8/1@8 cucumber-ghost6/1.5@20',
+];
+
+/**
+ * The Haunted Hayride: a seasonal bonus level (October, or ?season=halloween). Not part of LEVELS:
+ * no stars, no unlock chain, not on the Interactive map.
+ * @returns {LevelDef}
+ */
+export function halloweenLevel() {
+  return {
+    id: 'halloween',
+    name: 'The Haunted Hayride',
+    world: 'countryside',
+    worldIdx: 0,
+    layout: 2,
+    startTreats: 900,
+    lives: 20,
+    cats: [...ALL],
+    waves: HALLOWEEN_WAVES.map(parseWave),
+    boss: 'cucumberto',
+    intro: ['cucumber-ghost'],
+    seed: 3110,
+    song: 'spooky',
   };
 }

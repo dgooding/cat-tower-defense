@@ -4,6 +4,7 @@
 // The director at the bottom watches the game and picks the song: title lullaby, world theme, boss theme.
 import { audioOut, isSilent } from './sfx.js';
 import { SONGS, WORLD_SONG, parseBar, parseChord, midiToHz } from './songs.js';
+import { isHalloween } from '../core/season.js';
 
 /** @typedef {import('./songs.js').SongDef} SongDef */
 /** @typedef {(s: Synth, t: number, e8: number, out: AudioNode) => void} PlayFn */
@@ -295,7 +296,11 @@ export function compile(song) {
 
     // Drums (wave layer)
     /** @param {number} step @param {Parameters<Synth['drum']>[0]} kind @param {number} vol @param {number} [hz] */
-    const hit = (step, kind, vol, hz) => add(b + step, 1, (s, t, _e8, out) => s.drum(kind, t, vol, out, hz), { part: 'drum', kind, bar: i });
+    const hit = (step, kind, vol, hz) => {
+      // Kits are written for 4/4; in 3/4 the hits past the bar line are dropped.
+      if (step >= E) return;
+      add(b + step, 1, (s, t, _e8, out) => s.drum(kind, t, vol, out, hz), { part: 'drum', kind, bar: i });
+    };
     switch (song.kit) {
       case 'farm':
         hit(0, 'kick', 0.3);
@@ -315,7 +320,7 @@ export function compile(song) {
         hit(5, 'tom', 0.2, 130);
         hit(3, 'block', 0.06, 880);
         hit(6, 'block', 0.05, 1175);
-        hit((i * 5 + 2) % 8, 'drip', 0.07, 900 + ((i * 7) % 5) * 120);
+        hit((i * 5 + 2) % E, 'drip', 0.07, 900 + ((i * 7) % 5) * 120);
         hit(2, 'shaker', 0.03);
         hit(7, 'shaker', 0.03);
         break;
@@ -604,7 +609,7 @@ export function installMusic(game) {
     if (game.frozen) return;
     if (game.mode === 'diorama') {
       endedAt = 0;
-      music('title');
+      music(isHalloween() ? 'spooky' : 'title');
       return;
     }
     const sim = game.sim;
@@ -613,7 +618,7 @@ export function installMusic(game) {
       music(null);
       return;
     }
-    const world = /** @type {Record<string, string>} */ (WORLD_SONG)[lvl.world] ?? 'countryside';
+    const world = /** @type {any} */ (lvl).song ?? /** @type {Record<string, string>} */ (WORLD_SONG)[lvl.world] ?? 'countryside';
     if (sim.phase === 'won' || sim.phase === 'lost') {
       endedAt ||= performance.now();
       music(performance.now() - endedAt < 3800 ? null : world);

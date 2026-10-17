@@ -143,6 +143,33 @@ export const SONGS = {
       'Ab5:2 C6:2 Eb6:2', 'D6:4 C6:2', 'Bb5:6', 'r:2 D5:2 F5:2',
     ],
   },
+  // October: a minor-key music-box waltz with clacking-bone woodblocks (menus in October, the Haunted Hayride).
+  spooky: {
+    name: 'Pumpkin Lullaby',
+    bpm: 88,
+    beats: 3,
+    swing: 0,
+    lead: 'bell',
+    pad: 'steam',
+    bass: 'waltz',
+    kit: 'bath',
+    arp: 'harp',
+    reverb: 0.45,
+    shift: -12,
+    breathe: true,
+    chords: [
+      'A2: A3 C4 E4', 'F2: A3 C4 F4', 'D2: A3 D4 F4', 'E2: G#3 B3 E4',
+      'A2: A3 C4 E4', 'F2: A3 C4 F4', 'D2: A3 D4 F4', 'E2: G#3 B3 D4',
+      'F2: A3 C4 F4', 'C3: G3 C4 E4', 'D2: A3 D4 F4', 'A2: A3 C4 E4',
+      'F2: A3 C4 F4', 'E2: G#3 B3 E4', 'A2: A3 C4 E4', 'E2: G#3 B3 D4',
+    ],
+    melody: [
+      'E5:2 C5:2 A4:2', 'F5:4 E5:2', 'D5:2 F5:2 A5:2', 'G#5:4 E5:2',
+      'E5:2 C5:2 A4:2', 'C6:4 A5:2', 'B5:2 A5:2 F5:2', 'E5:2 D#5:2 E5:2',
+      'A5:2 G#5:2 A5:2', 'G5:4 E5:2', 'F5:2 E5:2 D5:2', 'C5:4 E5:2',
+      'A5:2 C6:2 A5:2', 'G#5:4 B5:2', 'A5:6', 'r:2 E5:2 G#5:2',
+    ],
+  },
   // Any boss on the field: a sneaky villain bassoon over a bouncing ostinato.
   boss: {
     name: 'Here Comes Trouble',
