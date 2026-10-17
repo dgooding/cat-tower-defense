@@ -1,193 +1,23 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="color-scheme" content="light dark" />
-<title>9 Lives: Cat Tower Defense — Free Tower Defense Game, Plays in Your Browser</title>
-<meta name="description" content="Command an army of cats. 12 cat towers, 11 enemy types, 99 waves, 5 rooms, 9 lives. A free tower defense game — no download, no install, plays right in your browser." />
-<meta property="og:type" content="website" />
-<meta property="og:title" content="9 Lives: Cat Tower Defense" />
-<meta property="og:description" content="Command an army of cats. Stop the waves. Defend the tower. Free, in your browser." />
-<meta property="og:url" content="https://cat-tower-defense.com/" />
-<meta name="twitter:card" content="summary" />
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23fff8e8'/><path d='M9 15 8 5l6 4M23 15l1-10-6 4' fill='%23a8d5b5' stroke='%232e2119' stroke-width='2' stroke-linejoin='round'/><circle cx='16' cy='19' r='9' fill='%23a8d5b5' stroke='%232e2119' stroke-width='2'/><circle cx='12.5' cy='18' r='1.9' fill='%232e2119'/><circle cx='19.5' cy='18' r='1.9' fill='%232e2119'/><path d='M16 22v2' stroke='%232e2119' stroke-width='1.7' stroke-linecap='round'/></svg>" />
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Lilita+One&display=swap" rel="stylesheet">
-<style>
-:root{color-scheme:light dark;--ink:#251b15;--muted:#67574b;--paper:#fff8e8;--panel:#fffdf7;--edge:#2e2119;--pink:#f46b83;--red:#d83c57;--mint:#71c7a3;--gold:#f3b73f;--blue:#5c9fe8;--shadow:rgba(57,30,15,.22)}
-@media(prefers-color-scheme:dark){:root{--ink:#fff7e9;--muted:#cdbdaf;--paper:#1b1715;--panel:#28211d;--edge:#f1d7bd;--pink:#ff758e;--red:#ff6079;--mint:#79d4ad;--gold:#ffc85d;--blue:#74b6ff;--shadow:rgba(0,0,0,.42)}}
-*{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
-body{margin:0;min-height:100vh;background:var(--paper);color:var(--ink);font-family:"Atkinson Hyperlegible",-apple-system,BlinkMacSystemFont,sans-serif;line-height:1.55;background-image:radial-gradient(circle at 12px 12px,color-mix(in srgb,var(--gold) 13%,transparent) 2px,transparent 2px);background-size:24px 24px;overflow-x:hidden}
-.wrap{max-width:900px;margin:0 auto;padding:clamp(14px,3vw,32px)}
-.skip{position:absolute;left:-9999px}
-.skip:focus{left:12px;top:12px;z-index:50;background:var(--panel);border:2px solid var(--edge);border-radius:8px;padding:8px 12px;font-weight:700}
-/* ---------- hero ---------- */
-.hero{text-align:center;padding-top:clamp(4px,2vw,18px)}
-.mascot{display:block;width:min(216px,52vw);height:auto;margin:0 auto -6px;filter:drop-shadow(0 12px 16px var(--shadow));animation:floaty 3.6s ease-in-out infinite}
-@keyframes floaty{0%,100%{transform:translateY(0) rotate(-1.2deg)}50%{transform:translateY(-10px) rotate(1.2deg)}}
-h1{font-family:"Lilita One",Helvetica,sans-serif;font-weight:400;font-size:clamp(2.1rem,8.4vw,4.1rem);line-height:.92;margin:8px 0 10px;color:var(--red);text-shadow:3px 3px 0 color-mix(in srgb,var(--edge) 26%,transparent)}
-.tagline{font-weight:700;font-size:clamp(1rem,3.4vw,1.28rem);margin:0 auto 6px;max-width:30ch}
-.sub{color:var(--muted);font-size:.95rem;margin:0 auto 22px;max-width:46ch}
-.cta{display:inline-block;font-family:"Lilita One",Helvetica,sans-serif;font-size:clamp(1.25rem,4.6vw,1.6rem);text-decoration:none;color:#14261e;background:var(--mint);border:3px solid var(--edge);border-radius:12px;padding:15px 34px;box-shadow:5px 5px 0 var(--edge);transition:transform .08s ease,box-shadow .08s ease}
-.cta:hover{transform:translate(2px,2px);box-shadow:3px 3px 0 var(--edge)}
-.cta:active{transform:translate(5px,5px);box-shadow:none}
-.cta:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
-.free{color:var(--muted);font-size:.86rem;margin:14px 0 0}
-/* ---------- generic card ---------- */
-section{margin-top:clamp(30px,6vw,52px)}
-h2{font-family:"Lilita One",Helvetica,sans-serif;font-weight:400;font-size:clamp(1.4rem,5vw,2rem);text-align:center;margin:0 0 6px}
-.lede{text-align:center;color:var(--muted);margin:0 auto 20px;max-width:52ch;font-size:.95rem}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:10px}
-.stat{background:var(--panel);border:2px solid var(--edge);border-radius:10px;box-shadow:3px 3px 0 var(--edge);padding:14px 10px;text-align:center}
-.stat b{display:block;font-family:"Lilita One",Helvetica,sans-serif;font-weight:400;font-size:clamp(1.5rem,5.5vw,2rem);line-height:1.05}
-.stat span{display:block;font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-top:3px}
-.diffs{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
-.diff{background:var(--panel);border:2px solid var(--edge);border-radius:11px;box-shadow:4px 4px 0 var(--edge);padding:16px;text-align:center}
-.diff .ico{font-size:2.1rem;line-height:1}
-.diff b{display:block;font-family:"Lilita One",Helvetica,sans-serif;font-weight:400;font-size:1.15rem;margin:5px 0 3px}
-.diff small{display:block;color:var(--muted);font-size:.84rem;margin-bottom:9px}
-.diff ul{margin:0;padding:0;list-style:none;font-size:.82rem;font-weight:700}
-.diff li{padding:3px 0;border-top:1px dashed color-mix(in srgb,var(--edge) 26%,transparent)}
-.howto{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
-.howto div{background:color-mix(in srgb,var(--gold) 15%,var(--panel));border:2px solid color-mix(in srgb,var(--edge) 55%,transparent);border-radius:10px;padding:13px 15px;font-size:.9rem}
-.howto b{display:block;font-family:"Lilita One",Helvetica,sans-serif;font-weight:400;font-size:1.5rem;line-height:1}
-.rooms{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:0;margin:0;list-style:none}
-.rooms li{background:var(--panel);border:2px solid var(--edge);border-radius:999px;box-shadow:2px 2px 0 var(--edge);padding:7px 15px;font-size:.86rem;font-weight:700}
-.rooms li:not(:last-child)::after{content:""}
-.foot{text-align:center;color:var(--muted);font-size:.82rem;margin:44px 0 8px;padding-top:20px;border-top:2px dashed color-mix(in srgb,var(--edge) 28%,transparent)}
-.foot a{color:inherit;font-weight:700}
-.final{text-align:center;margin-top:44px}
-@media(prefers-reduced-motion:reduce){.mascot{animation:none}.cta{transition:none}}
-</style>
-</head>
-<body>
-<a class="skip" href="#play">Skip to play</a>
-
-<main class="wrap">
-
-  <header class="hero">
-    <canvas id="mascot" class="mascot" width="400" height="400" role="img" aria-label="A crowned cat holding a fish — champion of the sacred nap"></canvas>
-    <h1>9 Lives:<br>Cat Tower Defense</h1>
-    <p class="tagline">Command an army of cats. Stop the waves. Defend the tower.</p>
-    <p class="sub">Household horrors are marching down the carpet toward the one sacred nap spot. You have nine lives and twelve deeply unhinged cats.</p>
-    <p id="play"><a class="cta" href="tower-defense-game.html">▶ Play now</a></p>
-    <p class="free">Free · no download · plays in your browser</p>
-  </header>
-
-  <section aria-labelledby="s1">
-    <h2 id="s1">What you're defending</h2>
-    <p class="lede">A full tower defense campaign, built to be finished in one sitting or lost to for a whole evening.</p>
-    <div class="stats">
-      <div class="stat"><b>12</b><span>Cat towers</span></div>
-      <div class="stat"><b>11</b><span>Enemy types</span></div>
-      <div class="stat"><b>99</b><span>Waves</span></div>
-      <div class="stat"><b>9</b><span>Lives</span></div>
-      <div class="stat"><b>5</b><span>Rooms</span></div>
-    </div>
-  </section>
-
-  <section aria-labelledby="s2">
-    <h2 id="s2">Pick your Cat Lady</h2>
-    <p class="lede">Three difficulties. Tap a card in-game to start immediately — no setup screen, no tutorial wall.</p>
-    <div class="diffs">
-      <article class="diff">
-        <div class="ico" aria-hidden="true">😻</div>
-        <b>Casual</b>
-        <small>Plenty of treats, softer horrors.</small>
-        <ul><li>0.85× enemy HP</li><li>1.25× treats earned</li><li>250 treats to start</li></ul>
-      </article>
-      <article class="diff">
-        <div class="ico" aria-hidden="true">🙀</div>
-        <b>Crazy</b>
-        <small>The intended descent into madness.</small>
-        <ul><li>Standard enemy HP</li><li>Standard treats</li><li>200 treats to start</li></ul>
-      </article>
-      <article class="diff">
-        <div class="ico" aria-hidden="true">😾</div>
-        <b>Feral</b>
-        <small>Hungry horrors. Empty wallet.</small>
-        <ul><li>1.3× enemy HP</li><li>0.8× treats earned</li><li>150 treats to start</li></ul>
-      </article>
-    </div>
-  </section>
-
-  <section aria-labelledby="s3">
-    <h2 id="s3">A new battlefield every 5 waves</h2>
-    <p class="lede">The campaign moves through five rooms. When the room changes, every cat is refunded at 70% so you can rebuild around the new carpet — nobody gets stranded.</p>
-    <ul class="rooms">
-      <li>🛋️ Living Room</li>
-      <li>🍳 Kitchen</li>
-      <li>🛏️ Bedroom</li>
-      <li>🛁 Bathroom</li>
-      <li>🪜 Attic</li>
-    </ul>
-  </section>
-
-  <section aria-labelledby="s4">
-    <h2 id="s4">How it plays</h2>
-    <div class="howto">
-      <div><b>1</b>Pick a feline defender from the shop. Each cat is its own weapon.</div>
-      <div><b>2</b>Tap a floor tile to place it. Carpet is for enemies only.</div>
-      <div><b>3</b>Send the wave — or call it early for bonus treats.</div>
-    </div>
-  </section>
-
-  <p class="final"><a class="cta" href="tower-defense-game.html">▶ Play 9 Lives: Cat Tower Defense</a></p>
-
-  <footer class="foot">
-    <p>Free to play · no account · no download<br>
-    <a href="tower-defense-game.html">Play the game</a> · <a href="about.html">About</a> · <a href="privacy-policy.html">Privacy Policy</a></p>
-  </footer>
-
-</main>
-
-<script>
-(function(){
-  var cv=document.getElementById('mascot'); if(!cv||!cv.getContext) return;
-  var LILITA='#3a2a1e';
-  function disc(g,x,y,r,f,lw){g.beginPath();g.arc(x,y,r,0,Math.PI*2);g.fillStyle=f;g.fill();if(lw){g.lineWidth=lw;g.strokeStyle=LILITA;g.stroke();}}
-  function ell(g,x,y,rx,ry,f,lw){g.beginPath();g.ellipse(x,y,rx,ry,0,0,Math.PI*2);g.fillStyle=f;g.fill();if(lw){g.lineWidth=lw;g.strokeStyle=LILITA;g.stroke();}}
-  function tri(g,a,b,c,d,e,f,fill,lw){g.beginPath();g.moveTo(a,b);g.lineTo(c,d);g.lineTo(e,f);g.closePath();g.fillStyle=fill;g.fill();if(lw){g.lineWidth=lw;g.strokeStyle=LILITA;g.stroke();}}
-  try{
-    var g=cv.getContext('2d'); var c=200;
-    g.lineJoin='round'; g.lineCap='round';
-    // tail
-    g.strokeStyle=LILITA;g.lineWidth=30;g.beginPath();g.arc(c-78,c+52,50,Math.PI*.75,Math.PI*1.95);g.stroke();
-    g.strokeStyle='#a8d5b5';g.lineWidth=18;g.beginPath();g.arc(c-78,c+52,50,Math.PI*.75,Math.PI*1.95);g.stroke();
-    // ears
-    tri(g,c-62,c-52,c-48,c-108,c-16,c-64,'#8fd18b',4);tri(g,c-52,c-60,c-46,c-88,c-28,c-64,'#f6a8bb',0);
-    tri(g,c+62,c-52,c+48,c-108,c+16,c-64,'#8fd18b',4);tri(g,c+52,c-60,c+46,c-88,c+28,c-64,'#f6a8bb',0);
-    // body + belly patch
-    disc(g,c,c+20,78,'#a8d5b5',4);
-    ell(g,c-40,c+52,26,20,'rgba(255,255,255,.25)',0);
-    ell(g,c+26,c+32,36,25,'#fffdf7',3);
-    tri(g,c+44,c+22,c+60,c+22,c+52,c+36,'#e45c72',0);
-    // whiskers
-    g.strokeStyle=LILITA;g.lineWidth=3;
-    for(var s=-1;s<=1;s+=2){for(var i=0;i<3;i++){var yy=c+26+i*10-10;g.beginPath();g.moveTo(c+s*62,yy);g.lineTo(c+s*108,yy+(i-1)*6);g.stroke();}}
-    // eyes
-    for(var e=-1;e<=1;e+=2){ell(g,c+e*34,c-8,26,30,'#fff',3);disc(g,c+e*34+6,c-4,11,LILITA,0);disc(g,c+e*30,c-10,4,'#fff',0);}
-    g.strokeStyle=LILITA;g.lineWidth=5;g.beginPath();g.moveTo(c-62,c-40);g.lineTo(c-36,c-32);g.moveTo(c+62,c-40);g.lineTo(c+36,c-32);g.stroke();
-    // crown
-    g.fillStyle='#f3b73f';g.strokeStyle=LILITA;g.lineWidth=4;
-    g.beginPath();g.moveTo(c-36,c-72);g.lineTo(c-36,c-104);g.lineTo(c-18,c-86);g.lineTo(c,c-108);g.lineTo(c+18,c-86);g.lineTo(c+36,c-104);g.lineTo(c+36,c-72);g.closePath();g.fill();g.stroke();
-    disc(g,c,c-108,7,'#e45c72',0);
-    // collar + bell
-    g.strokeStyle='#f3b73f';g.lineWidth=10;g.beginPath();g.arc(c,c+52,46,Math.PI*.15,Math.PI*.85);g.stroke();
-    disc(g,c,c+96,10,'#ffe26b',3);
-    // the fish
-    g.save();g.translate(c+88,c+98);g.rotate(-.5);
-    ell(g,0,0,34,16,'#7ab8d9',3);tri(g,30,0,52,-14,52,14,'#7ab8d9',3);disc(g,-18,0,4,LILITA,0);
-    g.restore();
-    cv.setAttribute('data-drawn','1');
-  }catch(err){
-    // Canvas unavailable — the page is fully readable without the mascot.
-    cv.style.display='none';
-  }
-})();
-</script>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Catastrophe! The Great Snack Defense</title>
+    <meta name="description" content="Catastrophe! A cozy, silly cat tower defense game, plus The Snack Symphony, an interactive musical journey. Free in your browser." />
+    <link rel="canonical" href="https://cat-tower-defense.com/catastrophe/" />
+    <meta http-equiv="refresh" content="0; url=./catastrophe/" />
+    <meta name="theme-color" content="#F4A6B7" />
+    <link rel="icon" href="./catastrophe/favicon.svg" type="image/svg+xml" />
+    <script>
+      location.replace('./catastrophe/');
+    </script>
+    <style>
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #fbf5e9; color: #3b3a4a; font: 600 18px/1.5 system-ui, sans-serif; text-align: center; }
+      a { color: #c0587a; }
+    </style>
+  </head>
+  <body>
+    <p>Taking you to <a href="./catastrophe/">Catastrophe!</a></p>
+  </body>
 </html>
