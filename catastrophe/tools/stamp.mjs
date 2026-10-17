@@ -10,7 +10,7 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const PAGES = ['index.html', 'play.html', 'interactive.html', 'gallery.html', 'dev/sheet.html'];
+const PAGES = ['index.html', 'play.html', 'interactive.html', 'journey.html', 'gallery.html', 'dev/sheet.html'];
 const START = '<!-- importmap:start (node tools/stamp.mjs) -->';
 const END = '<!-- importmap:end -->';
 
@@ -65,10 +65,10 @@ for (const page of PAGES) {
     .sort()
     .map((n) => `./css/${n}?v=${hashOf(path.join(root, 'css', n))}`);
   const js = modules.map((m) => `./${path.relative(root, m).split(path.sep).join('/')}?v=${hashOf(m)}`);
-  const statics = ['./', './index.html', './play.html', './interactive.html', './manifest.webmanifest', './favicon.svg', './icon-192.png', './icon-512.png'];
+  const statics = ['./', './index.html', './play.html', './interactive.html', './journey.html', './manifest.webmanifest', './favicon.svg', './icon-192.png', './icon-512.png'];
   const list = [...statics, ...css, ...js];
   const pagesHash = crypto.createHash('sha1');
-  for (const p of ['index.html', 'play.html', 'interactive.html', 'manifest.webmanifest']) pagesHash.update(fs.readFileSync(path.join(root, p), 'utf8').replace(/\r\n/g, '\n'));
+  for (const p of ['index.html', 'play.html', 'interactive.html', 'journey.html', 'manifest.webmanifest']) pagesHash.update(fs.readFileSync(path.join(root, p), 'utf8').replace(/\r\n/g, '\n'));
   const version = crypto.createHash('sha1').update(list.join('\n')).update(pagesHash.digest('hex')).digest('hex').slice(0, 10);
   const swFile = path.join(root, 'sw.js');
   const before = fs.readFileSync(swFile, 'utf8');

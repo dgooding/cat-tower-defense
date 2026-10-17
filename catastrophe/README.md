@@ -11,6 +11,7 @@ Live at <https://cat-tower-defense.com/catastrophe/>.
 | `index.html` | Hub page with a live Pudding, an upper-right **KatNip** quick-play button, **▶ Play**, **🗺 Interactive Mode** and **✨ New Feature Page** buttons |
 | `play.html` | The game (Quick Play) |
 | `interactive.html` | Interactive Mode: storybook, world map, briefings, heroes, challenges, Cat-alog, Wardrobe, Cat-chievements, credits |
+| `journey.html` | The Snack Symphony: an interactive musical journey through the worlds, driven by the score |
 | `gallery.html` | Design Gallery: review cats, enemies, bosses and rooms with 👍/✏️ + notes, then **📋 Copy all feedback** |
 | `dev/sheet.html` | Dev contact sheet of every expression and upgrade look |
 
@@ -42,6 +43,8 @@ Progress lives in `localStorage` (`cata:save:v1`); an in-progress run autosaves 
 **Settings** (title ⚙ button, pause menu, or `#/settings`): volume, music volume, mute, reduced motion, screen shake, colorblind status icons, reset progress.
 
 **Music** is composed in code too (`js/audio/songs.js` is the score, `js/audio/music.js` plays it): a music-box lullaby on menus, a theme per world (porch guitar, kotatsu lounge, bathhouse koto, sky waltz) and a villain theme whenever a boss is on the field. Drums and arpeggios fade in during waves and out between them; pausing ducks the music. It is silent until the first click, stays under the sound effects, and goes quiet with mute, a hidden tab or the Boss Key. In Interactive Mode it only plays after you turn sound on (🔇 button). With `?debug=1`, `__cata.music()` shows what's playing.
+
+**The Snack Symphony** (`journey.html`, `js/journey/`): an interactive musical journey in seven chapters (overture, meadow, kotatsu lounge, lantern alley, cloud whale waltz, the Great Empty Bowl, finale). Each chapter has a world, a song, narration lines on 4-bar phrases, and one way to play along. You wake a star constellation, plant flowers and bonk marching cucumbers on the beat, echo Mama's teacup tunes, catch flickering lanterns, ride a cloud to catch the melody's stars, toss snacks on the snare, and tuck the cats in. A parchment travel map connects the chapters. Everything runs on the audio clock: `Engine.onNote` reports every note the score plays (part, pitch, bar, step) and visuals fire as it's heard. Player taps snap to the next eighth and pick notes from the chord that's playing (`J.play`, `J.tone`, `J.toneY`). Rhythm taps are judged against the beat (`J.judge`). Progress is saved in `cata:journey:v1`, with chapter select on return. Controls: tap/click, Space, 1-4 for teacups, Esc pauses. Hidden tabs pause. Debug: `journey.html?debug=1` exposes `__journey` (`startTravel(i)` jumps to a chapter).
 
 **On phones:** when the stage gets small, `Game.layout` adds `body.phone` and a HUD scale `--hz`, so buttons stay finger-sized (about 44 CSS px). Powers stack on the left edge, speed/pause/mute on the right, and the cat tray fills the bottom strip. On touch, the first tap shows the ghost (range, OK or not), and tapping the ghost seats the cat. When you drag a cat from the tray, the ghost floats above your fingertip. Starting a level from the menus goes full screen with landscape lock where the browser allows it (Android). **Offline / installable:** `sw.js` (scope: this folder only) precaches every versioned file after the first visit and keeps the Latin font files. Pages load network-first, so updates still arrive. "Add to Home Screen" gives an app icon and full screen. The service worker is skipped on localhost unless you add `?sw=1`.
 
@@ -85,7 +88,8 @@ js/art/enemies/   enemyrig.js · 20 enemies
 js/art/bosses/    4 bosses
 js/art/heroes/    3 heroes
 js/art/rooms/     common.js · countryside · house · bathhouse · sky
-js/audio/     meow.js · sfx.js (Web Audio synth) · songs.js (the score) · music.js (score player + director)
+js/audio/     meow.js · sfx.js (Web Audio synth) · songs.js (the score) · music.js (score player + director, onNote hook)
+js/journey/   main.js (clock, input, travel map, HUD) · chapters.js (7 chapters) · kit.js (particles, glows, backdrops, actors)
 js/data/      ids, cats, enemies, levels, waves, quips, moods, heroes, achievements, layout
 js/sim/       sim.js · extras.js · geometry.js · autobot.js (pure, deterministic)
 js/game/      game.js · renderer.js · fx.js · icons.js

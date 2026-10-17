@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <link rel="canonical" href="https://cat-tower-defense.com/catastrophe/journey.html" />
+    <meta name="theme-color" content="#1E2150" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="./icon-192.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Catastrophe!" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Catastrophe!" />
+    <meta property="og:title" content="Catastrophe! The Snack Symphony" />
+    <meta property="og:description" content="An interactive musical journey. Every tap is a note, every note makes magic." />
+    <meta property="og:image" content="https://cat-tower-defense.com/catastrophe/og.jpg" />
+    <title>The Snack Symphony · Catastrophe!</title>
+    <!-- importmap:start (node tools/stamp.mjs) -->
+    <script type="importmap">
+      {
+        "imports": {
+          "./js/anim/rig.js": "./js/anim/rig.js?v=c1ebe404",
+          "./js/art/bosses/bathzilla.js": "./js/art/bosses/bathzilla.js?v=0167a7e1",
+          "./js/art/bosses/cucumberto.js": "./js/art/bosses/cucumberto.js?v=8d6c4e54",
+          "./js/art/bosses/great-bowl.js": "./js/art/bosses/great-bowl.js?v=c6d09cd1",
+          "./js/art/bosses/sucktator.js": "./js/art/bosses/sucktator.js?v=f96ed338",
+          "./js/art/brush.js": "./js/art/brush.js?v=371c1329",
+          "./js/art/cats/beans.js": "./js/art/cats/beans.js?v=efb02b81",
+          "./js/art/cats/biscuit.js": "./js/art/cats/biscuit.js?v=f7026a58",
+          "./js/art/cats/catrig.js": "./js/art/cats/catrig.js?v=2070b1ec",
+          "./js/art/cats/chonkington.js": "./js/art/cats/chonkington.js?v=05119026",
+          "./js/art/cats/dr-nip.js": "./js/art/cats/dr-nip.js?v=3187410d",
+          "./js/art/cats/granny-purl.js": "./js/art/cats/granny-purl.js?v=9f036f55",
+          "./js/art/cats/mama-mittens.js": "./js/art/cats/mama-mittens.js?v=c2ce5095",
+          "./js/art/cats/maneki-mochi.js": "./js/art/cats/maneki-mochi.js?v=7d89e584",
+          "./js/art/cats/noodle.js": "./js/art/cats/noodle.js?v=4a6442cc",
+          "./js/art/cats/pudding.js": "./js/art/cats/pudding.js?v=e57e16fd",
+          "./js/art/cats/sriracha.js": "./js/art/cats/sriracha.js?v=16d6d354",
+          "./js/art/cats/tofu.js": "./js/art/cats/tofu.js?v=7614a392",
+          "./js/art/cats/whiskerton.js": "./js/art/cats/whiskerton.js?v=1f175f9b",
+          "./js/art/enemies/carrier.js": "./js/art/enemies/carrier.js?v=3dc3376b",
+          "./js/art/enemies/closed-door.js": "./js/art/enemies/closed-door.js?v=420d953c",
+          "./js/art/enemies/cone-of-shame.js": "./js/art/enemies/cone-of-shame.js?v=a0cee76e",
+          "./js/art/enemies/cucumber-cadet.js": "./js/art/enemies/cucumber-cadet.js?v=786db1a2",
+          "./js/art/enemies/empty-bowl.js": "./js/art/enemies/empty-bowl.js?v=ab5794b5",
+          "./js/art/enemies/enemyrig.js": "./js/art/enemies/enemyrig.js?v=c228464a",
+          "./js/art/enemies/fancy-bed.js": "./js/art/enemies/fancy-bed.js?v=7890dc43",
+          "./js/art/enemies/good-boy.js": "./js/art/enemies/good-boy.js?v=9d4fd395",
+          "./js/art/enemies/hose-snek.js": "./js/art/enemies/hose-snek.js?v=d1cb00c9",
+          "./js/art/enemies/lint-roller.js": "./js/art/enemies/lint-roller.js?v=704e9889",
+          "./js/art/enemies/monday.js": "./js/art/enemies/monday.js?v=a59d9b59",
+          "./js/art/enemies/overdue-bill.js": "./js/art/enemies/overdue-bill.js?v=67e6dea0",
+          "./js/art/enemies/party-pooper.js": "./js/art/enemies/party-pooper.js?v=435f06eb",
+          "./js/art/enemies/rubber-duckie.js": "./js/art/enemies/rubber-duckie.js?v=a2dd0972",
+          "./js/art/enemies/sneaky-pickle.js": "./js/art/enemies/sneaky-pickle.js?v=37ee3583",
+          "./js/art/enemies/snip-snap.js": "./js/art/enemies/snip-snap.js?v=46dcf02b",
+          "./js/art/enemies/spritz.js": "./js/art/enemies/spritz.js?v=7b2681dd",
+          "./js/art/enemies/thunderclap.js": "./js/art/enemies/thunderclap.js?v=8a1df710",
+          "./js/art/enemies/tubby-mcsoak.js": "./js/art/enemies/tubby-mcsoak.js?v=33647f31",
+          "./js/art/enemies/umbrella-uncles.js": "./js/art/enemies/umbrella-uncles.js?v=7bdf1651",
+          "./js/art/enemies/vroomba.js": "./js/art/enemies/vroomba.js?v=16c8058f",
+          "./js/art/fallbacks.js": "./js/art/fallbacks.js?v=505fdc4e",
+          "./js/art/hats.js": "./js/art/hats.js?v=c36f38af",
+          "./js/art/heroes/big-tom.js": "./js/art/heroes/big-tom.js?v=8d4663ea",
+          "./js/art/heroes/nebula.js": "./js/art/heroes/nebula.js?v=44ee66b6",
+          "./js/art/heroes/ronin-biscuit.js": "./js/art/heroes/ronin-biscuit.js?v=72baae58",
+          "./js/art/palette.js": "./js/art/palette.js?v=6d514679",
+          "./js/art/props.js": "./js/art/props.js?v=23ecbd77",
+          "./js/art/registry.js": "./js/art/registry.js?v=2ebc0075",
+          "./js/art/rooms/bathhouse.js": "./js/art/rooms/bathhouse.js?v=c38c1013",
+          "./js/art/rooms/common.js": "./js/art/rooms/common.js?v=24ae5a71",
+          "./js/art/rooms/countryside.js": "./js/art/rooms/countryside.js?v=93c54ead",
+          "./js/art/rooms/house.js": "./js/art/rooms/house.js?v=a349cfe6",
+          "./js/art/rooms/sky.js": "./js/art/rooms/sky.js?v=87c6a0f1",
+          "./js/audio/meow.js": "./js/audio/meow.js?v=7948fdbf",
+          "./js/audio/music.js": "./js/audio/music.js?v=f0117bc6",
+          "./js/audio/sfx.js": "./js/audio/sfx.js?v=d827a591",
+          "./js/audio/songs.js": "./js/audio/songs.js?v=997158f7",
+          "./js/core/pwa.js": "./js/core/pwa.js?v=09e3d550",
+          "./js/core/rng.js": "./js/core/rng.js?v=37cf8431",
+          "./js/core/spline.js": "./js/core/spline.js?v=f42ce0b0",
+          "./js/data/achievements.js": "./js/data/achievements.js?v=bc01ad47",
+          "./js/data/cats.js": "./js/data/cats.js?v=0ccd7ea1",
+          "./js/data/enemies.js": "./js/data/enemies.js?v=066c2bf2",
+          "./js/data/heroes.js": "./js/data/heroes.js?v=6069a8fc",
+          "./js/data/ids.js": "./js/data/ids.js?v=98d0dcd1",
+          "./js/data/layout.js": "./js/data/layout.js?v=b7715d3c",
+          "./js/data/levels.js": "./js/data/levels.js?v=9a13611b",
+          "./js/data/moods.js": "./js/data/moods.js?v=f57fe83a",
+          "./js/data/quips.js": "./js/data/quips.js?v=f6e8ea72",
+          "./js/data/waves.js": "./js/data/waves.js?v=2317b185",
+          "./js/gallery/concepts.js": "./js/gallery/concepts.js?v=8157011a",
+          "./js/gallery/feedback.js": "./js/gallery/feedback.js?v=46498dff",
+          "./js/gallery/gallery.js": "./js/gallery/gallery.js?v=6a6927f9",
+          "./js/game/fx.js": "./js/game/fx.js?v=f15c78a5",
+          "./js/game/game.js": "./js/game/game.js?v=a69aa063",
+          "./js/game/icons.js": "./js/game/icons.js?v=077e2c99",
+          "./js/game/renderer.js": "./js/game/renderer.js?v=458d3762",
+          "./js/hub.js": "./js/hub.js?v=83aaa65e",
+          "./js/interactive/dom.js": "./js/interactive/dom.js?v=48287bdf",
+          "./js/interactive/lore.js": "./js/interactive/lore.js?v=21ebdc42",
+          "./js/interactive/main.js": "./js/interactive/main.js?v=22305547",
+          "./js/interactive/rigs.js": "./js/interactive/rigs.js?v=8f6e6408",
+          "./js/interactive/routes/achievements.js": "./js/interactive/routes/achievements.js?v=5e67eacf",
+          "./js/interactive/routes/briefing.js": "./js/interactive/routes/briefing.js?v=4757ecae",
+          "./js/interactive/routes/catalog.js": "./js/interactive/routes/catalog.js?v=a3f379d9",
+          "./js/interactive/routes/credits.js": "./js/interactive/routes/credits.js?v=8621fd33",
+          "./js/interactive/routes/hero.js": "./js/interactive/routes/hero.js?v=18d79039",
+          "./js/interactive/routes/map.js": "./js/interactive/routes/map.js?v=54ca7ea5",
+          "./js/interactive/routes/story.js": "./js/interactive/routes/story.js?v=4c185c4b",
+          "./js/interactive/routes/wardrobe.js": "./js/interactive/routes/wardrobe.js?v=51acf696",
+          "./js/interactive/stage.js": "./js/interactive/stage.js?v=44d8a734",
+          "./js/interactive/store.js": "./js/interactive/store.js?v=ef363824",
+          "./js/interactive/story/props.js": "./js/interactive/story/props.js?v=b7073d8f",
+          "./js/interactive/story/script.js": "./js/interactive/story/script.js?v=fa328d3a",
+          "./js/interactive/ui.js": "./js/interactive/ui.js?v=82822e8f",
+          "./js/journey/chapters.js": "./js/journey/chapters.js?v=f25977a7",
+          "./js/journey/kit.js": "./js/journey/kit.js?v=3f6d02ae",
+          "./js/journey/main.js": "./js/journey/main.js?v=f708e9d2",
+          "./js/sim/autobot.js": "./js/sim/autobot.js?v=15a3c64c",
+          "./js/sim/extras.js": "./js/sim/extras.js?v=3c4979ba",
+          "./js/sim/geometry.js": "./js/sim/geometry.js?v=1a0db068",
+          "./js/sim/sim.js": "./js/sim/sim.js?v=72ed3f52",
+          "./js/ui/bosskey.js": "./js/ui/bosskey.js?v=4d2d67c4",
+          "./js/ui/coach.js": "./js/ui/coach.js?v=ac1e194d",
+          "./js/ui/debug.js": "./js/ui/debug.js?v=5d2e836a",
+          "./js/ui/hud.js": "./js/ui/hud.js?v=52976647",
+          "./js/ui/main.js": "./js/ui/main.js?v=5343953f",
+          "./js/ui/save.js": "./js/ui/save.js?v=7af6a914",
+          "./js/ui/screens.js": "./js/ui/screens.js?v=a91bd44e",
+          "./js/ui/settings.js": "./js/ui/settings.js?v=c98411a8",
+          "./js/ui/stats.js": "./js/ui/stats.js?v=bc2de487"
+        }
+      }
+    </script>
+    <!-- importmap:end -->
+    <meta name="description" content="Catastrophe! The Snack Symphony: an interactive musical journey through the cats' world. Every tap plays a note. Music, art and story all made in code." />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./css/tokens.css?v=0be81d8d" />
+    <link rel="stylesheet" href="./css/journey.css?v=29b518e5" />
+  </head>
+  <body>
+    <canvas id="j" aria-label="The journey: an animated scene that reacts to the music and to your taps"></canvas>
+
+    <section id="start" aria-labelledby="start-title">
+      <div class="card">
+        <p class="kicker">Catastrophe! presents</p>
+        <h1 id="start-title">The Snack Symphony</h1>
+        <p class="sub">An interactive musical journey through the cats' world.</p>
+        <p>Every tap plays a note, and every note makes a little magic. Turn the sound on.</p>
+        <button id="begin" class="btn primary big" data-a="begin">Begin the journey</button>
+        <p class="keys">Tap or click to play. <kbd>Space</kbd> works too. <kbd>Esc</kbd> pauses.</p>
+        <p id="noaudio" class="warn" hidden>This browser can't play Web Audio, and the journey is made of music. Try a current Chrome, Edge, Firefox or Safari.</p>
+        <nav id="chapters" hidden aria-label="Chapters you've reached">
+          <p class="small">Or jump to a chapter you've reached:</p>
+          <ol></ol>
+        </nav>
+        <p class="small"><a href="./index.html">Back to Catastrophe!</a></p>
+      </div>
+    </section>
+
+    <header id="hud" hidden>
+      <div class="hud-left">
+        <a class="chip" href="./index.html" aria-label="Leave the journey">Leave</a>
+        <button class="chip" data-a="pause">Pause</button>
+        <button class="chip" id="sound" data-a="sound" aria-pressed="true">Sound on</button>
+      </div>
+      <div class="hud-mid" id="ch-title"></div>
+      <div class="hud-right" id="count" role="status"></div>
+    </header>
+    <p id="narr" aria-live="polite"></p>
+    <p id="hint" aria-live="polite"></p>
+    <p id="rotate">Turn your phone sideways. The journey is wide, like a picture book.</p>
+
+    <section id="pause" hidden role="dialog" aria-modal="true" aria-label="Paused">
+      <div class="card">
+        <h2>Paused</h2>
+        <p>The music is holding its breath.</p>
+        <div class="row">
+          <button class="btn primary" data-a="resume">Resume</button>
+          <button class="btn" data-a="restart">Restart chapter</button>
+          <button class="btn" data-a="skip">Skip chapter</button>
+          <a class="btn" href="./index.html">Leave</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="credits" hidden role="dialog" aria-label="The end">
+      <div class="card">
+        <p class="kicker">The end</p>
+        <h2>The Snack Symphony</h2>
+        <p>Every note, every star and every whisker in this journey was written in code.<br />No audio files. No image files. Just a lot of cats.</p>
+        <p id="stats" class="small"></p>
+        <div class="row">
+          <button class="btn primary" data-a="again">Journey again</button>
+          <a class="btn" href="./play.html">Play Catastrophe!</a>
+          <a class="btn" href="./index.html">Back to the hub</a>
+        </div>
+      </div>
+    </section>
+
+    <script type="module" src="./js/journey/main.js?v=f708e9d2"></script>
+  </body>
+</html>

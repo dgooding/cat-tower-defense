@@ -3,12 +3,13 @@
 // so versioned files are cached forever and pages are fetched network-first (updates arrive on the next visit).
 /* eslint-env serviceworker */
 // @generated:start (node tools/stamp.mjs)
-const VERSION = '0114da7ea9';
+const VERSION = '2a3ba6cd50';
 const PRECACHE = [
   "./",
   "./index.html",
   "./play.html",
   "./interactive.html",
+  "./journey.html",
   "./manifest.webmanifest",
   "./favicon.svg",
   "./icon-192.png",
@@ -16,6 +17,7 @@ const PRECACHE = [
   "./css/gallery.css?v=87402a20",
   "./css/game.css?v=1d33f85b",
   "./css/interactive.css?v=f8809bbb",
+  "./css/journey.css?v=29b518e5",
   "./css/tokens.css?v=0be81d8d",
   "./js/anim/rig.js?v=c1ebe404",
   "./js/art/bosses/bathzilla.js?v=0167a7e1",
@@ -71,7 +73,7 @@ const PRECACHE = [
   "./js/art/rooms/house.js?v=a349cfe6",
   "./js/art/rooms/sky.js?v=87c6a0f1",
   "./js/audio/meow.js?v=7948fdbf",
-  "./js/audio/music.js?v=74c2774c",
+  "./js/audio/music.js?v=f0117bc6",
   "./js/audio/sfx.js?v=d827a591",
   "./js/audio/songs.js?v=997158f7",
   "./js/core/pwa.js?v=09e3d550",
@@ -112,6 +114,9 @@ const PRECACHE = [
   "./js/interactive/story/props.js?v=b7073d8f",
   "./js/interactive/story/script.js?v=fa328d3a",
   "./js/interactive/ui.js?v=82822e8f",
+  "./js/journey/chapters.js?v=f25977a7",
+  "./js/journey/kit.js?v=3f6d02ae",
+  "./js/journey/main.js?v=f708e9d2",
   "./js/sim/autobot.js?v=15a3c64c",
   "./js/sim/extras.js?v=3c4979ba",
   "./js/sim/geometry.js?v=1a0db068",

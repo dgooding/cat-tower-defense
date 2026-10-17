@@ -7,7 +7,11 @@ import { SONGS, WORLD_SONG, parseBar, parseChord, midiToHz } from './songs.js';
 
 /** @typedef {import('./songs.js').SongDef} SongDef */
 /** @typedef {(s: Synth, t: number, e8: number, out: AudioNode) => void} PlayFn */
-/** @typedef {{step: number, layer: 0|1, play: PlayFn, breathe: boolean}} Ev */
+/**
+ * What a scheduled note is, for anything that wants to react to the music (the journey's visuals).
+ * @typedef {{part: 'lead'|'pad'|'bass'|'drum'|'chime'|'arp', bar: number, step?: number, midi?: number, dur?: number, notes?: number[], kind?: string}} NoteMeta
+ */
+/** @typedef {{step: number, layer: 0|1, play: PlayFn, breathe: boolean, meta: NoteMeta}} Ev */
 
 const AHEAD = 0.25; // seconds of notes scheduled ahead of the clock
 const TICK_MS = 60;
@@ -243,8 +247,8 @@ export function compile(song) {
   const shift = song.shift ?? 0;
   /** @type {Ev[]} */
   const evs = [];
-  /** @param {number} step @param {0|1} layer @param {PlayFn} play @param {boolean} [breathe] */
-  const add = (step, layer, play, breathe = false) => evs.push({ step, layer, play, breathe });
+  /** @param {number} step @param {0|1} layer @param {PlayFn} play @param {NoteMeta} meta @param {boolean} [breathe] */
+  const add = (step, layer, play, meta, breathe = false) => evs.push({ step, layer, play, breathe, meta: { ...meta, step } });
 
   chords.forEach((c, i) => {
     const b = i * E;
@@ -253,42 +257,45 @@ export function compile(song) {
     const r = c.bass;
 
     for (const n of parseBar(song.melody[i])) {
-      add(b + n.at, 0, (s, t, e8, out) => s.lead(song.lead, n.midi + shift, t, n.dur * e8, out), firstHalf);
+      add(b + n.at, 0, (s, t, e8, out) => s.lead(song.lead, n.midi + shift, t, n.dur * e8, out), { part: 'lead', midi: n.midi + shift, dur: n.dur, bar: i }, firstHalf);
     }
 
     // Pad / comping
+    const pm = { part: /** @type {const} */ ('pad'), notes: c.notes, bar: i };
     if (song.pad === 'comp') {
-      add(b, 0, (s, t, e8, out) => c.notes.forEach((m) => s.lead('keys', m, t, 1.5 * e8, out, 0.3)));
-      add(b + 3, 0, (s, t, e8, out) => c.notes.forEach((m) => s.lead('keys', m, t, 2.5 * e8, out, 0.26)));
+      add(b, 0, (s, t, e8, out) => c.notes.forEach((m) => s.lead('keys', m, t, 1.5 * e8, out, 0.3)), pm);
+      add(b + 3, 0, (s, t, e8, out) => c.notes.forEach((m) => s.lead('keys', m, t, 2.5 * e8, out, 0.26)), pm);
     } else if (song.pad === 'stabs') {
-      for (const k of [0, 3, 6]) add(b + k, 0, (s, t, e8, out) => c.notes.forEach((m) => s.lead('reed', m, t, 0.7 * e8, out, k ? 0.32 : 0.42)));
+      for (const k of [0, 3, 6]) add(b + k, 0, (s, t, e8, out) => c.notes.forEach((m) => s.lead('reed', m, t, 0.7 * e8, out, k ? 0.32 : 0.42)), pm);
     } else {
       const o = PADS[song.pad];
-      add(b, 0, (s, t, e8, out) => s.pad(c.notes, t, E * e8, o, out));
+      add(b, 0, (s, t, e8, out) => s.pad(c.notes, t, E * e8, o, out), pm);
     }
 
     // Bass
+    /** @param {number} m */
+    const bm = (m) => ({ part: /** @type {const} */ ('bass'), midi: m, bar: i });
     if (song.bass === 'root5') {
-      add(b, 0, (s, t, e8, out) => s.bass(r, t, 3 * e8, 0.2, out));
-      add(b + 4, 0, (s, t, e8, out) => s.bass(r + 7, t, 3 * e8, 0.17, out));
+      add(b, 0, (s, t, e8, out) => s.bass(r, t, 3 * e8, 0.2, out), bm(r));
+      add(b + 4, 0, (s, t, e8, out) => s.bass(r + 7, t, 3 * e8, 0.17, out), bm(r + 7));
     } else if (song.bass === 'walk') {
       let appr = next.bass - 1;
       while (appr - r > 7) appr -= 12;
       while (r - appr > 7) appr += 12;
-      [r, thirdOf(r, c.notes), r + 7, appr].forEach((m, k) => add(b + k * 2, 0, (s, t, e8, out) => s.bass(m, t, 1.7 * e8, k ? 0.17 : 0.2, out)));
+      [r, thirdOf(r, c.notes), r + 7, appr].forEach((m, k) => add(b + k * 2, 0, (s, t, e8, out) => s.bass(m, t, 1.7 * e8, k ? 0.17 : 0.2, out), bm(m)));
     } else if (song.bass === 'drone') {
-      add(b, 0, (s, t, e8, out) => s.bass(r, t, 5.5 * e8, 0.2, out));
-      add(b + 6, 0, (s, t, e8, out) => s.bass(r + 12, t, 1.6 * e8, 0.1, out));
+      add(b, 0, (s, t, e8, out) => s.bass(r, t, 5.5 * e8, 0.2, out), bm(r));
+      add(b + 6, 0, (s, t, e8, out) => s.bass(r + 12, t, 1.6 * e8, 0.1, out), bm(r + 12));
     } else if (song.bass === 'waltz') {
-      add(b, 0, (s, t, e8, out) => s.bass(r, t, 3.5 * e8, 0.18, out));
-      add(b + 4, 0, (s, t, e8, out) => s.bass(r + 7, t, 1.6 * e8, 0.1, out));
+      add(b, 0, (s, t, e8, out) => s.bass(r, t, 3.5 * e8, 0.18, out), bm(r));
+      add(b + 4, 0, (s, t, e8, out) => s.bass(r + 7, t, 1.6 * e8, 0.1, out), bm(r + 7));
     } else if (song.bass === 'ostinato') {
-      [0, 0, 12, 0, 7, 0, 8, 7].forEach((iv, k) => add(b + k, 0, (s, t, e8, out) => s.bass(r + iv, t, 0.7 * e8, k % 2 ? 0.13 : 0.19, out)));
+      [0, 0, 12, 0, 7, 0, 8, 7].forEach((iv, k) => add(b + k, 0, (s, t, e8, out) => s.bass(r + iv, t, 0.7 * e8, k % 2 ? 0.13 : 0.19, out), bm(r + iv)));
     }
 
     // Drums (wave layer)
     /** @param {number} step @param {Parameters<Synth['drum']>[0]} kind @param {number} vol @param {number} [hz] */
-    const hit = (step, kind, vol, hz) => add(b + step, 1, (s, t, _e8, out) => s.drum(kind, t, vol, out, hz));
+    const hit = (step, kind, vol, hz) => add(b + step, 1, (s, t, _e8, out) => s.drum(kind, t, vol, out, hz), { part: 'drum', kind, bar: i });
     switch (song.kit) {
       case 'farm':
         hit(0, 'kick', 0.3);
@@ -316,7 +323,10 @@ export function compile(song) {
         hit(0, 'kick', 0.22);
         hit(2, 'shaker', 0.05);
         hit(4, 'shaker', 0.05);
-        if (i % 2 === 0) add(b, 1, (s, t, e8, out) => s.lead('bell', c.notes[c.notes.length - 1] + 24, t, 2 * e8, out, 0.3));
+        if (i % 2 === 0) {
+          const cm = c.notes[c.notes.length - 1] + 24;
+          add(b, 1, (s, t, e8, out) => s.lead('bell', cm, t, 2 * e8, out, 0.3), { part: 'chime', midi: cm, bar: i });
+        }
         break;
       case 'boss':
         hit(0, 'kick', 0.32);
@@ -341,7 +351,7 @@ export function compile(song) {
             : [[0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 2, 1], 1.2, 0.28, 'bell'];
       spec[0].forEach((st, k) => {
         const m = up[spec[1][k] % up.length];
-        add(b + st, 1, (s, t, e8, out) => s.lead(spec[4], m, t, spec[2] * e8, out, spec[3]));
+        add(b + st, 1, (s, t, e8, out) => s.lead(spec[4], m, t, spec[2] * e8, out, spec[3]), { part: 'arp', midi: m, bar: i });
       });
     }
   });
@@ -365,6 +375,8 @@ class Track {
     this.e8 = 30 / this.song.bpm;
     this.loopDur = steps * this.e8;
     this.loopT = start;
+    /** Audio time of the very first bar (beat clock origin). */
+    this.start = start;
     this.i = 0;
     this.cycle = 0;
     this.gain = ac.createGain();
@@ -421,6 +433,7 @@ class Track {
       if (fresh && !silent && driveAudible && !resting) {
         try {
           ev.play(this.eng.syn, Math.max(t, now), this.e8, ev.layer ? this.drive : this.base);
+          this.eng.onNote?.(ev.meta, Math.max(t, now), this);
         } catch {
           /* a single bad note must never stop the music */
         }
@@ -463,6 +476,21 @@ export class Engine {
     this.reverb.connect(this.bus);
     this.syn = new Synth(ac, noiseBuffer(ac));
     /** @type {Track|null} */
+    this.track = null;
+    /** Notes played by a person (the journey): same mixer and reverb as the score. */
+    this.player = ac.createGain();
+    this.player.gain.value = 1;
+    this.player.connect(this.bus);
+    const ps = ac.createGain();
+    ps.gain.value = 0.3;
+    this.player.connect(ps).connect(this.reverb);
+    /** Called for every note the score actually plays, with its audio start time. @type {((meta: NoteMeta, t: number, track: Track) => void)|null} */
+    this.onNote = null;
+  }
+
+  /** Fade the current song out and stop scheduling. @param {number} [fade] */
+  stop(fade = 1.2) {
+    this.track?.stop(fade);
     this.track = null;
   }
 
