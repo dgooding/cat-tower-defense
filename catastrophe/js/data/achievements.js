@@ -12,7 +12,7 @@
 /** @type {Achievement[]} */
 export const ACHIEVEMENTS = [
   { id: 'first-nap', name: 'First Nap', desc: 'Seat your first cat.', icon: '🛋️', counter: 'catsPlaced', goal: 1 },
-  { id: 'full-house', name: 'If I Fits, I Sits', desc: 'Have 10 cats seated at once in a level.', icon: '📦', counter: 'allSpotsFilled', goal: 1 },
+  { id: 'full-house', name: 'If I Fits, I Sits', desc: 'Fill every seat: reach a level’s cat limit.', icon: '📦', counter: 'allSpotsFilled', goal: 1 },
   { id: 'first-win', name: 'Snacks Are Safe', desc: 'Win your first level.', icon: '🍙', counter: 'wins', goal: 1 },
   { id: 'nine-lives', name: 'Nine Lives', desc: 'Win a level with exactly 1 snack left.', icon: '😅', counter: 'oneSnackWins', goal: 1 },
   { id: 'flawless', name: 'Not a Crumb', desc: 'Win a level without losing a single snack.', icon: '✨', counter: 'flawlessWins', goal: 1 },

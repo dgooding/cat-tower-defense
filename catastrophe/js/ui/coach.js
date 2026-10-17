@@ -14,14 +14,14 @@ function h(html) {
 }
 
 const KEY = 'tutorial:place';
-/** @typedef {{at:'tray'|'go'|'top', text:string, hint?:'first'|'second'}} Step */
+/** @typedef {{at:'tray'|'go'|'top'|'left', text:string, hint?:'first'|'second'}} Step */
 /** @type {Step[]} */
 const STEPS = [
   { at: 'tray', text: '<b>1/5 · Pick a cat.</b> Click <b>Pudding</b> in the tray (or press <kbd>1</kbd>).' },
   { at: 'top', hint: 'first', text: '<b>2/5 · Seat it beside the road.</b> Enemies walk the road; the circle is Pudding’s reach. Green = OK, red = not here. The 🐾 marks a great spot: click there (or anywhere green).' },
   { at: 'top', hint: 'second', text: '<b>3/5 · Slow them down.</b> Pick <b>Granny Purl</b> in the tray (<kbd>2</kbd>) and seat her <i>earlier</i> along the road, so enemies crawl into Pudding’s circle.' },
   { at: 'go', text: '<b>4/5 · Ready?</b> Press <b>GO!</b> when you are. Enemies follow the road to your Snack Stash. Don’t let them reach it!' },
-  { at: 'top', text: '<b>5/5 · Upgrade.</b> Click a seated cat, then its upgrade button. A strong cat beats two weak ones. Cats can also <b>↔ Move</b> for free between waves.' },
+  { at: 'left', text: '<b>5/5 · Upgrade.</b> Click a seated cat, then its upgrade button. A strong cat beats two weak ones. Cats can also <b>↔ Move</b> for free between waves.' },
 ];
 
 export class Coach {

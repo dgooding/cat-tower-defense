@@ -661,8 +661,13 @@ body:not([data-screen='level']) #game {
   top: 110px;
   margin-left: -235px;
 }
-.coach.at-top::after {
+.coach.at-top::after,
+.coach.at-left::after {
   display: none;
+}
+.coach.at-left {
+  left: 22px;
+  top: 150px;
 }
 #ui .coach-skip {
   display: block;
