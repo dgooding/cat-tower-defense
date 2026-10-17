@@ -1,0 +1,34 @@
+# Check-only CI for the Catastrophe! game folder. It never deploys (Porkbun deploys every push on its own);
+# it just flags a red ✗ on the commit if the simulation, the balance bot, imports or cache-busting stamps break.
+name: Catastrophe checks
+
+on:
+  push:
+    paths: ['catastrophe/**', '.github/workflows/catastrophe-checks.yml']
+  pull_request:
+    paths: ['catastrophe/**', '.github/workflows/catastrophe-checks.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: catastrophe
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Simulation tests
+        run: node --test tools/tests/
+      - name: Balance bot (every level must be won; 1-1 lost with zero cats)
+        run: node tools/bot.mjs --strict
+      - name: Interactive Mode imports resolve
+        run: node js/interactive/tools/check-imports.mjs
+      - name: Cache-busting stamps up to date (run node tools/stamp.mjs before pushing)
+        run: node tools/stamp.mjs --check

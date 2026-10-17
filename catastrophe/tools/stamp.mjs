@@ -14,8 +14,8 @@ const PAGES = ['index.html', 'play.html', 'interactive.html', 'gallery.html', 'd
 const START = '<!-- importmap:start (node tools/stamp.mjs) -->';
 const END = '<!-- importmap:end -->';
 
-/** @param {string} file absolute path */
-const hashOf = (file) => crypto.createHash('sha1').update(fs.readFileSync(file)).digest('hex').slice(0, 8);
+/** Hash text with normalized line endings, so Windows checkouts (CRLF) and the repo/CI (LF) agree. @param {string} file absolute path */
+const hashOf = (file) => crypto.createHash('sha1').update(fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n')).digest('hex').slice(0, 8);
 
 /** @param {string} dir @returns {string[]} */
 function walk(dir) {

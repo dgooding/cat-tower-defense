@@ -1,7 +1,8 @@
 // Headless balance bot: plays every level with a greedy builder (and once with zero cats).
-// Usage: node tools/bot.mjs [levelId…] [--hero=<heroId>|--hero=all] [--challenge=iron|nap] [--free]
+// Usage: node tools/bot.mjs [levelId…] [--hero=<heroId>|--hero=all] [--challenge=iron|nap] [--free] [--strict]
 //   e.g. node tools/bot.mjs 1-1 1-2      node tools/bot.mjs --hero=nebula      node tools/bot.mjs --hero=all
 //   --free: the bot picks its own best-coverage spots anywhere (free placement, like a sharp human)
+//   --strict: fail (exit 1) if any level is not won (used by CI for normal play)
 import { LEVELS, LEVEL_BY_ID } from '../js/data/levels.js';
 import { HEROES } from '../js/data/heroes.js';
 import { getLayout } from '../js/data/layout.js';
@@ -32,6 +33,7 @@ const heroArg = flag('hero');
 const heroes = heroArg === 'all' ? [null, ...Object.keys(HEROES)] : [heroArg];
 const challenge = /** @type {any} */ (flag('challenge'));
 const free = args.includes('--free');
+const strict = args.includes('--strict');
 
 const zero = runLevel(LEVEL_BY_ID['1-1'], { build: false, powers: false });
 console.log(`[zero cats] 1-1 → ${zero.phase.toUpperCase()} (snacks ${zero.snacks}, wave ${zero.wave}/${zero.total})`);
@@ -50,5 +52,8 @@ for (const hero of heroes) {
 }
 if (!ok) {
   console.log('BOT CHECK FAILED: 1-1 must be won by the bot and lost with zero cats.');
+  process.exitCode = 1;
+} else if (strict && losses > 0) {
+  console.log(`BOT CHECK FAILED (--strict): ${losses} level(s) not won.`);
   process.exitCode = 1;
 } else console.log(`Bot check OK: 1-1 won by the bot, lost with zero cats. Levels not won: ${losses}.`);
