@@ -142,7 +142,7 @@ export class Hud {
     return this.game.mode === 'level' && !this.root.hidden;
   }
 
-  /** Show for a freshly started (or resumed) level. @param {{resumed?: boolean}} [o] */
+  /** Show for a freshly started (or resumed) level. @param {{resumed?: boolean, quiet?: boolean}} [o] quiet: skip intro toasts (the coach is talking) */
   show(o = {}) {
     this.root.hidden = false;
     this.closeMenus();
@@ -183,7 +183,7 @@ export class Hud {
       portrait.title = `${meta?.name ?? ''}: ${meta?.passive?.name ?? ''} — ${meta?.passive?.desc ?? ''}. Click, then click the ground to move (H).`;
     }
     if (o.resumed) this.toast('Welcome back! Resumed where you left off. 🐾');
-    else if (!this.hooks.autoplay) {
+    else if (!this.hooks.autoplay && !o.quiet) {
       this.setBanner('Place your cats!', 'Pick a cat below, then click anywhere off the path');
       if (lvl.newCat) this.toast(`New cat: ${CAT_BY_ID[lvl.newCat].name}! ${CAT_BY_ID[lvl.newCat].blurb}`, 5);
       for (const id of lvl.intro ?? []) {

@@ -596,6 +596,85 @@ body:not([data-screen='level']) #game {
   position: absolute;
   inset: 0;
 }
+/* ───────────── Guided first level (coach note) ───────────── */
+.coach {
+  position: absolute;
+  width: 470px;
+  padding: 16px 20px 12px;
+  background: #fff6b8;
+  border: 4px solid var(--ink);
+  border-radius: 16px;
+  box-shadow: 0 6px 0 var(--ink), 0 24px 40px -20px rgba(0, 0, 0, 0.45);
+  font: 500 22px/1.35 var(--font-body, var(--font-display));
+  color: var(--ink);
+  pointer-events: auto;
+  transform: rotate(-1deg);
+  animation: pop-in 0.3s var(--spring) both;
+  z-index: 5;
+}
+.coach[hidden] {
+  display: none;
+}
+.coach b {
+  font-family: var(--font-display);
+}
+.coach kbd {
+  font: 700 18px var(--font-display);
+  background: var(--ink);
+  color: #fffdf6;
+  border-radius: 6px;
+  padding: 0 7px;
+}
+.coach::after {
+  content: '';
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  background: #fff6b8;
+  border: 4px solid var(--ink);
+  border-top: 0;
+  border-left: 0;
+}
+.coach.at-tray {
+  right: 300px;
+  bottom: 175px;
+}
+.coach.at-tray::after {
+  right: 60px;
+  bottom: -17px;
+  transform: rotate(45deg);
+}
+.coach.at-go {
+  right: 30px;
+  top: 140px;
+}
+.coach.at-go::after {
+  right: 90px;
+  top: -17px;
+  transform: rotate(225deg);
+}
+.coach.at-top {
+  left: 50%;
+  top: 110px;
+  margin-left: -235px;
+}
+.coach.at-top::after {
+  display: none;
+}
+#ui .coach-skip {
+  display: block;
+  margin: 8px 0 0 auto;
+  min-height: 0;
+  min-width: 0;
+  padding: 2px 8px;
+  border: 0;
+  background: none;
+  font: 600 16px var(--font-display);
+  color: var(--ink-soft);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 /* ───────────── Cat tray (pick a cat, then place it anywhere off the path) ───────────── */
 @keyframes pop-in {
   from {

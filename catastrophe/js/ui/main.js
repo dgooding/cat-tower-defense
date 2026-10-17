@@ -3,6 +3,7 @@
 // boot, hash routes, wiring between game, HUD, saves, achievements, settings, Boss Key and debug tools.
 import { Game } from '../game/game.js';
 import { Hud } from './hud.js';
+import { Coach } from './coach.js';
 import { renderTitle, renderGrid } from './screens.js';
 import { installBossKey } from './bosskey.js';
 import { openSettings, applySettings, currentSettings } from './settings.js';
@@ -101,6 +102,7 @@ const hud = new Hud(game, ui, {
   },
   toggleBossKey: () => bossKey.toggle(),
 });
+const coach = new Coach(game, hud, ui);
 
 const bossKey = installBossKey({
   onShow: () => {
@@ -166,8 +168,10 @@ function startLevel(id, fresh = false) {
   tally.resetLevel();
   screen.replaceChildren();
   document.body.dataset.screen = 'level';
-  hud.show({ resumed: !!snap });
-  if (!AUTOPLAY) firstRunTips(level.id);
+  const coaching = !AUTOPLAY && !snap && Coach.wanted(level.id);
+  hud.show({ resumed: !!snap, quiet: coaching });
+  if (coaching) coach.start();
+  else if (!AUTOPLAY) firstRunTips(level.id);
 }
 
 /** @param {string} levelId */

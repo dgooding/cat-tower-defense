@@ -76,6 +76,8 @@ export class Renderer {
     this.ghost = null;
     /** @type {{cat:string, rig:CatRig, scale:number, pokeT:number, sprite?:any}|null} */
     this.ghostView = null;
+    /** Tutorial suggestion: a pulsing paw ring on the ground. @type {{x:number, y:number, label:string}|null} */
+    this.hint = null;
     /** @type {{x:number, y:number, r:number}|null} */
     this.aim = null;
     this.highlightEmpty = false;
@@ -146,6 +148,7 @@ export class Renderer {
     this.hoverSpot = -1;
     this.preview = null;
     this.ghost = null;
+    this.hint = null;
     this.release(this.ghostView);
     this.ghostView = null;
     this.aim = null;
@@ -1138,6 +1141,21 @@ export class Renderer {
     const sim = /** @type {Sim} */ (this.sim);
     const moving = this.ghost && this.ghost.slot >= 0 ? this.ghost.slot : -1;
     ctx.save();
+    const hint = this.hint;
+    if (hint && !(this.ghost && Math.hypot(this.ghost.x - hint.x, this.ghost.y - hint.y) < 40)) {
+      const pulse = this.reduced ? 0.5 : 0.5 + 0.5 * Math.sin(this.time * 4);
+      ctx.strokeStyle = `rgba(210,72,96,${0.55 + 0.35 * pulse})`;
+      ctx.fillStyle = `rgba(255,225,231,${0.35 + 0.2 * pulse})`;
+      ctx.lineWidth = 5;
+      ctx.setLineDash([14, 10]);
+      ctx.beginPath();
+      ctx.ellipse(hint.x, hint.y, 70 + 8 * pulse, 28 + 3 * pulse, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.setLineDash([]);
+      drawText(ctx, '🐾', hint.x, hint.y - 4 - 6 * pulse, 34);
+      drawText(ctx, hint.label, hint.x, hint.y - 60, 24, '#C2405A');
+    }
     for (const [i, alpha] of /** @type {[number, number][]} */ ([
       [this.hoverSpot, 0.35],
       [this.selectedSpot, 0.7],
